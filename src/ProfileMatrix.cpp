@@ -71,7 +71,7 @@ ProfileMatrix& ProfileMatrix::operator=(ProfileMatrix&& other)
     return *this;
 }
 
-virtual value_t ProfileMatrix::get(id_t row, id_t col) const /*override*/
+auto ProfileMatrix::get(id_t row, id_t col) const -> value_t /*override*/
 {
     assert(row >= 0 && col >= 0 && "Row and column indexes must be in bounds");
     if (row == col)

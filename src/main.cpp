@@ -3,7 +3,7 @@
 #include <cmath>
 #include <vector>
 
-#include "..\headers\ProfileMatrix.h"
+#include "ProfileMatrix.h"
 
 int main()
 {
