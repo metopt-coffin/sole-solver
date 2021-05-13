@@ -4,27 +4,21 @@
 #include <vector>
 
 #include "ProfileMatrix.h"
+#include "Utils.h"
 
 int main()
 {
     std::cout << "Work in progress ฅ^•ﻌ•^ฅ" << std::endl;
     const int SZ = 5;
-    std::vector<std::vector<double>> m(SZ, std::vector<double>(SZ, 0));
+    ProfileMatrix pm = Generator::generate_profile_matrix(SZ, 2);
+    std::cout << std::setprecision(2);
     for (int i = 0; i < SZ; i++)
     {
         for (int j = 0; j < SZ; j++)
         {
-            if (std::abs(i - j) < 2)
-                m[i][j] = (i + 1) * 10 + (j + 1);
-        }
-    }
-    ProfileMatrix pm(m);
-    for (int i = 0; i < SZ; i++)
-    {
-        for (int j = 0; j < SZ; j++)
-        {
-            int val = pm.get(i, j);
-            std::cout << std::setw(2) << val << ' ';
+            double val = pm.get(i, j);
+            
+            std::cout << std::setw(5) << val << ' ';
         }
         std::cout << std::endl;
     }
