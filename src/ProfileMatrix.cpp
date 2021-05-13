@@ -4,17 +4,17 @@
 #include <cassert>
 #include <cmath>
 
-ProfileMatrix::ProfileMatrix(const std::vector<std::vector<value_t>>& matrix)
+ProfileMatrix::ProfileMatrix(const std::vector<value_vec>& matrix)
 {
-    unsigned int dim = std::max(matrix.size(), matrix.size() > 0 ? matrix[0].size() : -1);
+    id_t dim = std::max(matrix.size(), matrix.size() > 0 ? matrix[0].size() : -1);
     diag.resize(dim);
-    for (int i = 0; i < dim; i++)
+    for (id_t i = 0; i < dim; i++)
     {
         diag[i] = matrix[i][i];
     }
     prof.resize(dim + 1);
     prof[0] = prof[1] = 1;
-    for (int i = 1; i < dim; i++)
+    for (id_t i = 1; i < dim; i++)
     {
         int pos = 0;
         for (; pos < i && matrix[i][pos] == 0; pos++);
@@ -27,6 +27,17 @@ ProfileMatrix::ProfileMatrix(const std::vector<std::vector<value_t>>& matrix)
     }
 }
 
+ProfileMatrix::ProfileMatrix(
+    const value_vec diag,
+    const value_vec low,
+    const value_vec up,
+    const id_vec prof)
+    : diag(std::move(diag))
+    , a_low(std::move(low))
+    , a_up(std::move(up))
+    , prof(std::move(prof))
+{}
+
 ProfileMatrix::ProfileMatrix(const ProfileMatrix& other)
     : diag(other.diag)
     , a_low(other.a_low)
@@ -34,7 +45,7 @@ ProfileMatrix::ProfileMatrix(const ProfileMatrix& other)
     , prof(other.prof)
 {}
 
-ProfileMatrix::ProfileMatrix(ProfileMatrix&& other)
+ProfileMatrix::ProfileMatrix(ProfileMatrix&& other) noexcept
     : diag(std::move(other.diag))
     , a_low(std::move(other.a_low))
     , a_up(std::move(other.a_up))
@@ -56,7 +67,7 @@ ProfileMatrix& ProfileMatrix::operator=(const ProfileMatrix& other)
     return *this;
 }
 
-ProfileMatrix& ProfileMatrix::operator=(ProfileMatrix&& other)
+ProfileMatrix& ProfileMatrix::operator=(ProfileMatrix&& other) noexcept
 {
     if (&other == this)
     {
