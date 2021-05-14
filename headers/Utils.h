@@ -4,8 +4,17 @@
 
 #include "ProfileMatrix.h"
 
+/*
+ * Struct, that has only static methods-generators
+ */
 struct Generator
 {
+    /*
+     * Generates a diagonal matrix in profile format with size of "dim"
+     * and position of non-zero elements closer than "width" to the main diagonal
+     * TODO NOTE: THIS IS A DRAFT THAT USES O(n^2) MEMORY AND TIME. 
+     * MORE APPROPRIATE IMPLEMENTATION IS REQUIRED
+     */
     static ProfileMatrix generate_profile_matrix(std::size_t dim, std::size_t width)
     {
         std::vector<std::vector<double>> m(dim, std::vector<double>(dim, 0.));
@@ -17,7 +26,7 @@ struct Generator
                 {
                     if (i - j < width)
                     {
-                        m[i][j] = (rand_gen() % 100000 + 1.) / (rand_gen() % 100000 + 1.);
+                        m[i][j] = (rand_gen() % 100000 - 50000.) / (rand_gen() % 100000 + 1.);
                     }
                 }
                 else

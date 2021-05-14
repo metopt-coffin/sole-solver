@@ -12,13 +12,22 @@ int main()
     const int SZ = 5;
     ProfileMatrix pm = Generator::generate_profile_matrix(SZ, 2);
     std::cout << std::setprecision(2);
-    for (int i = 0; i < SZ; i++)
+    for (std::size_t i = 0; i < SZ; i++)
     {
-        for (int j = 0; j < SZ; j++)
+        for (std::size_t j = 0; j < SZ; j++)
         {
-            double val = pm.get(i, j);
-            
-            std::cout << std::setw(5) << val << ' ';
+            std::cout << std::setw(5) << pm.get(i, j) << ' ';
+        }
+        std::cout << std::endl;
+    }
+    std::cout << std::endl;
+    for (std::size_t i = 0; i < SZ; i++)
+    {
+        for (std::size_t j = 0; j < SZ; j++)
+        {
+            pm.set(i, j, i * 10 + j);
+
+            std::cout << std::setw(5) << pm.get(i, j) << ' ';
         }
         std::cout << std::endl;
     }

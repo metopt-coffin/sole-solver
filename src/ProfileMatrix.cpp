@@ -84,7 +84,10 @@ ProfileMatrix& ProfileMatrix::operator=(ProfileMatrix&& other) noexcept
 
 auto ProfileMatrix::get(id_t row, id_t col) const -> value_t /*override*/
 {
-    assert(row >= 0 && col >= 0 && "Row and column indexes must be in bounds");
+    assert(row >= 0 && col >= 0
+        && row < diag.size() && col < diag.size()
+        && "Row and column indexes must be in bounds to get");
+
     if (row == col)
     {
         return diag[row];
@@ -103,4 +106,32 @@ auto ProfileMatrix::get(id_t row, id_t col) const -> value_t /*override*/
     }
     id_t pos = (prof[row] - 1) + prof_val - (row - col);
     return is_lower ? a_low[pos] : a_up[pos];
+}
+
+void ProfileMatrix::set(id_t row, id_t col, value_t val)
+{
+    assert(row >= 0 && col >= 0
+        && row < diag.size() && col < diag.size()
+        && "Row and column indexes must be in bounds to set");
+
+    if (row == col)
+    {
+        diag[row] = val;
+        return;
+    }
+
+    bool is_lower = col < row;
+    if (!is_lower)
+    {
+        std::swap(col, row);
+    }
+
+    unsigned int prof_val = prof[row + 1] - prof[row];
+    if (prof_val < row - col)
+    {
+        return; // do nothing, because we cannot change our profile
+    }
+    id_t pos = (prof[row] - 1) + prof_val - (row - col);
+    value_t& cell = is_lower ? a_low[pos] : a_up[pos];
+    cell = val;
 }
