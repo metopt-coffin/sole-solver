@@ -24,10 +24,10 @@ public:
      * Note, that vectors are not checked to be valid vectors of profile matrix.
      */
     ProfileMatrix(
-        const value_vec diag,
-        const value_vec low,
-        const value_vec up,
-        const id_vec prof);
+        value_vec diag,
+        value_vec low,
+        value_vec up,
+        id_vec prof);
 
     /*
      * Copy and move constructors and assign operators.

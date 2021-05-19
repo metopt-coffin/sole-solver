@@ -28,10 +28,10 @@ ProfileMatrix::ProfileMatrix(const std::vector<value_vec>& matrix)
 }
 
 ProfileMatrix::ProfileMatrix(
-    const value_vec diag,
-    const value_vec low,
-    const value_vec up,
-    const id_vec prof)
+    value_vec diag,
+    value_vec low,
+    value_vec up,
+    id_vec prof)
     : diag(std::move(diag))
     , a_low(std::move(low))
     , a_up(std::move(up))
@@ -99,7 +99,7 @@ auto ProfileMatrix::get(id_t row, id_t col) const -> value_t /*override*/
         std::swap(col, row);
     }
 
-    unsigned int prof_val = prof[row + 1] - prof[row];
+    id_t prof_val = prof[row + 1] - prof[row];
     if (prof_val < row - col)
     {
         return 0;
@@ -108,7 +108,7 @@ auto ProfileMatrix::get(id_t row, id_t col) const -> value_t /*override*/
     return is_lower ? a_low[pos] : a_up[pos];
 }
 
-void ProfileMatrix::set(id_t row, id_t col, value_t val)
+void ProfileMatrix::set(id_t row, id_t col, value_t val) /*override*/
 {
     assert(row >= 0 && col >= 0
         && row < diag.size() && col < diag.size()
@@ -126,7 +126,7 @@ void ProfileMatrix::set(id_t row, id_t col, value_t val)
         std::swap(col, row);
     }
 
-    unsigned int prof_val = prof[row + 1] - prof[row];
+    id_t prof_val = prof[row + 1] - prof[row];
     if (prof_val < row - col)
     {
         return; // do nothing, because we cannot change our profile

@@ -4,13 +4,14 @@
 #include <vector>
 
 #include "ProfileMatrix.h"
+#include "QuadMatrix.h"
 #include "Utils.h"
 
 int main()
 {
     std::cout << "Work in progress ฅ^•ﻌ•^ฅ" << std::endl;
     const int SZ = 5;
-    ProfileMatrix pm = Generator::generate_profile_matrix(SZ, 2);
+    ProfileMatrix pm = Generator::generate_profile_matrix(SZ, 3);
     std::cout << std::setprecision(2);
     for (std::size_t i = 0; i < SZ; i++)
     {
