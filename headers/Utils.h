@@ -28,7 +28,7 @@ struct Generator
         {
             for (int i = 0; i < dim; i++)
             {
-                if (j <= i && i - j < (int)width)
+                if (j <= i && i - j < width)
                 {
                     m[i][j] = (rand_gen() % 100000 - 50000.) / (rand_gen() % 100000 + 1.);
                     m[j][i] = (rand_gen() % 100000 - 50000.) / (rand_gen() % 100000 + 1.);

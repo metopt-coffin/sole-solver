@@ -11,10 +11,10 @@ int main()
 {
     std::cout << "Work in progress ฅ^•ﻌ•^ฅ" << std::endl;
     const int SZ = 5;
-    Generator::create_profile_matrix("test1", "prof.txt", SZ, 3);
-    Generator::create_quad_matrix("test2", "quad.txt", SZ, 3);
-    QuadMatrix qm = Generator::read_quad_matrix("test2", "quad.txt");
-    ProfileMatrix pm = Generator::read_profile_matrix("test1", "prof.txt");
+    Generator::create_profile_matrix("test2", "prof.txt", SZ, 3);
+    Generator::create_quad_matrix("test1", "quad.txt", SZ);
+    QuadMatrix qm = Generator::read_quad_matrix("test1", "quad.txt");
+    ProfileMatrix pm = Generator::read_profile_matrix("test2", "prof.txt");
     //std::cout << std::setprecision(2);
     for (std::size_t i = 0; i < SZ; i++)
     {

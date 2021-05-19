@@ -7,8 +7,8 @@
 ProfileMatrix::ProfileMatrix(const std::vector<value_vec>& matrix)
 {
     assert(!matrix.empty() && "Matrix must contain at least single row");
-    //assert(std::all_of(matrix.begin(), matrix.end(), [&matrix](const auto & row) { row.size() == matrix.size(); })
-    //    && "Matrix must be square");
+    assert(std::all_of(matrix.begin(), matrix.end(), [&matrix](const auto & row) { return row.size() == matrix.size(); })
+        && "Matrix must be square");
 
     id_t dim = matrix.size();
     diag.resize(dim);
