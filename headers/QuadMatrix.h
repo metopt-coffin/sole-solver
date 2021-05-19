@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include <iostream>
 #include "Matrix.h"
 
 /*
@@ -34,10 +35,14 @@ public:
      */
     virtual value_t get(id_t row, id_t col) const override;
 
+    std::vector<value_vec> get_matrix() const;
+
     /*
      * Sets value "val" to "row" row and "col" column.
      */
     virtual void set(id_t row, id_t col, value_t val) override;
+
+    friend std::ostream& operator<<(std::ostream& os, const QuadMatrix& qm);
 private:
     std::vector<value_vec> matrix; // two-dimensional vector, containing the matrix
 };

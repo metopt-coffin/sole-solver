@@ -1,6 +1,8 @@
 #pragma once
 #include <vector>
+#include <iostream>
 #include "Matrix.h"
+#include "QuadMatrix.h"
 
 /*
  * Class, representing two-dimensional matrix contained in the profile format
@@ -13,11 +15,11 @@ class ProfileMatrix : public Matrix
     using id_vec = std::vector<id_t>;
 public:
     /*
-     * Constructs a ProfileMatrix from a standard two-dimensional matrix. 
-     * Width and height of matrix may differ. 
-     * In that case their maximum is taken as a side of the result matrix.
+     * Constructs a ProfileMatrix from a standard two-dimensional square matrix. 
      */
     ProfileMatrix(const std::vector<value_vec>& matrix);
+
+    ProfileMatrix(const QuadMatrix& qm);
 
     /*
      * Constructs a ProfileMatrix directly from respective vectors
@@ -51,6 +53,7 @@ public:
      */
     virtual void set(id_t row, id_t col, value_t val) override;
 
+    friend std::ostream& operator<<(std::ostream& os, const ProfileMatrix& pm);
 private:
     const value_t * get_ptr(id_t row, id_t col) const;
     value_t * get_ptr(id_t row, id_t col);

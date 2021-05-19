@@ -7,8 +7,8 @@
 ProfileMatrix::ProfileMatrix(const std::vector<value_vec>& matrix)
 {
     assert(!matrix.empty() && "Matrix must contain at least single row");
-    assert(std::all_of(matrix.begin(), matrix.end(), [&matrix](const auto & row) { row.size() == matrix.size(); })
-        && "Matrix must be square");
+    //assert(std::all_of(matrix.begin(), matrix.end(), [&matrix](const auto & row) { row.size() == matrix.size(); })
+    //    && "Matrix must be square");
 
     id_t dim = matrix.size();
     diag.resize(dim);
@@ -30,6 +30,10 @@ ProfileMatrix::ProfileMatrix(const std::vector<value_vec>& matrix)
         }
     }
 }
+
+ProfileMatrix::ProfileMatrix(const QuadMatrix& qm)
+    : ProfileMatrix(qm.get_matrix())
+{}
 
 ProfileMatrix::ProfileMatrix(
     value_vec diag,
@@ -82,7 +86,28 @@ auto ProfileMatrix::get_ptr(id_t row, id_t col) const -> const value_t *
     return is_lower ? &a_low[pos] : &a_up[pos];
 }
 
-auto ProfileMatrix::get_ptr(id_t row, id_t col) -> value_t *
+auto ProfileMatrix::get_ptr(id_t row, id_t col) -> value_t*
 {
-    return const_cast<value_t *>(const_cast<const ProfileMatrix *>(this)->get_ptr(row, col));
+    return const_cast<value_t*>(const_cast<const ProfileMatrix*>(this)->get_ptr(row, col));
+}
+
+template<class T>
+void print_vector(std::ostream& os, std::vector<T> vec)
+{
+    for (std::size_t i = 0; i < vec.size(); i++)
+    {
+        os << vec[i] << ' ';
+    }
+}
+std::ostream& operator<<(std::ostream& os, const ProfileMatrix& pm)
+{
+    print_vector(os, pm.diag);
+    os << '\n';
+    print_vector(os, pm.a_low);
+    os << '\n';
+    print_vector(os, pm.a_up);
+    os << '\n';
+    print_vector(os, pm.prof);
+    os << '\n';
+    return os;
 }
