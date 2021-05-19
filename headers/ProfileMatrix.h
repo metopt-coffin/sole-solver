@@ -32,24 +32,29 @@ public:
     /*
      * Copy and move constructors and assign operators.
      */
-    ProfileMatrix(const ProfileMatrix& other);
-    ProfileMatrix(ProfileMatrix&& other) noexcept;
-    ProfileMatrix& operator=(const ProfileMatrix& other);
-    ProfileMatrix& operator=(ProfileMatrix&& other) noexcept;
+    ProfileMatrix(const ProfileMatrix& other) = default;
+    ProfileMatrix(ProfileMatrix&& other)= default;
+    ProfileMatrix& operator=(const ProfileMatrix& other) = default;
+    ProfileMatrix& operator=(ProfileMatrix&& other) = default;
 
     /*
      * Returns value from "row" row and "col" column.
      * If the required cell is inside profile, than the corresponding value is returned.
      * Otherwise, returns 0.
      */
-    virtual value_t get(id_t row, id_t col) const /*override*/;
+    virtual value_t get(id_t row, id_t col) const override;
 
     /*
      * Sets value "val" to "row" row and "col" column.
      * If the required cell is inside profile, than the corresponding value is set.
      * Otherwise, does nothing.
      */
-    virtual void set(id_t row, id_t col, value_t val) /*override*/;
+    virtual void set(id_t row, id_t col, value_t val) override;
+
+private:
+    const value_t * get_ptr(id_t row, id_t col) const;
+    value_t * get_ptr(id_t row, id_t col);
+
 private:
     value_vec diag; // vector, containing diagonal elements
     value_vec a_low; // vector, containing elements from the lower part of matrix
