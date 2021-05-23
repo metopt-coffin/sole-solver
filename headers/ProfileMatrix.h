@@ -9,17 +9,13 @@
  */
 class ProfileMatrix : public Matrix
 {
-    using value_t = double;
     using value_vec = std::vector<value_t>;
-    using id_t = std::size_t;
     using id_vec = std::vector<id_t>;
 public:
     /*
      * Constructs a ProfileMatrix from a standard two-dimensional square matrix. 
      */
-    ProfileMatrix(const std::vector<value_vec>& matrix);
-
-    ProfileMatrix(const QuadMatrix& qm);
+    ProfileMatrix(const Matrix & matrix);
 
     /*
      * Constructs a ProfileMatrix directly from respective vectors
@@ -39,19 +35,24 @@ public:
     ProfileMatrix& operator=(const ProfileMatrix& other) = default;
     ProfileMatrix& operator=(ProfileMatrix&& other) = default;
 
+    static ProfileMatrix lu_decompose(Matrix && matrix);
+
     /*
      * Returns value from "row" row and "col" column.
      * If the required cell is inside profile, than the corresponding value is returned.
      * Otherwise, returns 0.
      */
-    virtual value_t get(id_t row, id_t col) const override;
+    value_t get(id_t row, id_t col) const override;
 
     /*
      * Sets value "val" to "row" row and "col" column.
      * If the required cell is inside profile, than the corresponding value is set.
      * Otherwise, does nothing.
      */
-    virtual void set(id_t row, id_t col, value_t val) override;
+    void set(id_t row, id_t col, value_t val) override;
+
+    id_t row_cnt() const override { return diag.size(); }
+    id_t col_cnt() const override { return diag.size(); }
 
     friend std::ostream& operator<<(std::ostream& os, const ProfileMatrix& pm);
 private:

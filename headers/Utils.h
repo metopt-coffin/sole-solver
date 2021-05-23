@@ -24,15 +24,13 @@ struct Generator
     static QuadMatrix generate_quad_matrix(std::size_t dim, std::size_t width = UINT_MAX)
     {
         std::vector<std::vector<double>> m(dim, std::vector<double>(dim, 0.));
+        std::uniform_real_distribution<double> dist(-50000., 50000.);
         for (int j = 0; j < dim; j++)
         {
-            for (int i = 0; i < dim; i++)
+            for (int i = j; i < std::min(j + width, dim); i++)
             {
-                if (j <= i && i - j < width)
-                {
-                    m[i][j] = (rand_gen() % 100000 - 50000.) / (rand_gen() % 100000 + 1.);
-                    m[j][i] = (rand_gen() % 100000 - 50000.) / (rand_gen() % 100000 + 1.);
-                }
+                m[i][j] = dist(rand_gen);
+                m[j][i] = dist(rand_gen);
             }
         }
 
@@ -45,9 +43,11 @@ struct Generator
      */
     static ProfileMatrix generate_profile_matrix(const std::size_t dim, const std::size_t width = UINT_MAX)
     {
+        std::uniform_real_distribution<double> dist(-50000., 50000.);
+
         std::vector<double> diag(dim);
         for (std::size_t i = 0; i < dim; i++)
-        { diag[i] = (rand_gen() % 100000 - 50000.) / (rand_gen() % 100000 + 1.); }
+        { diag[i] = dist(rand_gen); }
 
         std::vector<std::size_t> profile(dim + 1);
         if (dim != 0)
@@ -61,8 +61,8 @@ struct Generator
         std::vector<double> a_up(profile.back() - 1);
         for (std::size_t i = 0; i < a_low.size(); i++)
         {
-            a_low[i] = (rand_gen() % 100000 - 50000.) / (rand_gen() % 100000 + 1.);
-            a_up[i] = (rand_gen() % 100000 - 50000.) / (rand_gen() % 100000 + 1.);
+            a_low[i] = dist(rand_gen);
+            a_up[i] = dist(rand_gen);
         }
 
         return ProfileMatrix(std::move(diag), std::move(a_low), std::move(a_up), std::move(profile));
@@ -126,7 +126,7 @@ struct Generator
         return ProfileMatrix(std::move(diag), std::move(low), std::move(up), std::move(prof));
     }
 
-    static std::mt19937 rand_gen;
+    static inline std::mt19937 rand_gen{std::random_device{}()};
 private:
     template<class T>
     static void read_vec(std::istream& is, std::vector<T>& vec)
@@ -141,5 +141,3 @@ private:
         }
     }
 };
-
-std::mt19937 Generator::rand_gen = std::mt19937(std::random_device()());
