@@ -8,9 +8,7 @@
  */
 class QuadMatrix : public Matrix
 {
-    using value_t = double;
     using value_vec = std::vector<value_t>;
-    using id_t = std::size_t;
 public:
     /*
      * Construct a QuadMatrix directly from a standard two-dimensional matrix.
@@ -33,14 +31,17 @@ public:
     /*
      *Returns value from "row" rowand "col" column.
      */
-    virtual value_t get(id_t row, id_t col) const override;
-
-    std::vector<value_vec> get_matrix() const;
+    value_t get(id_t row, id_t col) const override;
 
     /*
      * Sets value "val" to "row" row and "col" column.
      */
-    virtual void set(id_t row, id_t col, value_t val) override;
+    void set(id_t row, id_t col, value_t val) override;
+
+    id_t row_cnt() const override { return matrix.size(); }
+    id_t col_cnt() const override { return matrix.size(); }
+
+    const std::vector<value_vec> & get_matrix() const;
 
     friend std::ostream& operator<<(std::ostream& os, const QuadMatrix& qm);
 private:

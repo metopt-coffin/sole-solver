@@ -10,7 +10,7 @@ QuadMatrix::QuadMatrix(id_t dim1, id_t dim2)
     : matrix(dim1, value_vec(dim2))
 {}
 
-auto QuadMatrix::get_matrix() const -> std::vector<value_vec>
+auto QuadMatrix::get_matrix() const -> const std::vector<value_vec> &
 {
     return matrix;
 }

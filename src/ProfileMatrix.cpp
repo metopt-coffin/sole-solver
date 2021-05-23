@@ -1,39 +1,37 @@
 #include "ProfileMatrix.h"
+#include "Matrix.h"
 
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <iomanip>
 
-ProfileMatrix::ProfileMatrix(const std::vector<value_vec>& matrix)
+ProfileMatrix::ProfileMatrix(const Matrix & matrix)
 {
-    assert(!matrix.empty() && "Matrix must contain at least single row");
-    assert(std::all_of(matrix.begin(), matrix.end(), [&matrix](const auto & row) { return row.size() == matrix.size(); })
+    assert(matrix.row_cnt() * matrix.col_cnt() > 0 && "Matrix must contain at least single row");
+    assert(matrix.row_cnt() == matrix.col_cnt()
         && "Matrix must be square");
 
-    id_t dim = matrix.size();
+    id_t dim = matrix.row_cnt();
     diag.resize(dim);
     for (id_t i = 0; i < dim; i++)
     {
-        diag[i] = matrix[i][i];
+        diag[i] = matrix.get(i, i);
     }
     prof.resize(dim + 1);
     prof[0] = prof[1] = 1;
     for (id_t i = 1; i < dim; i++)
     {
         id_t pos = 0;
-        for (; pos < i && matrix[i][pos] == 0; pos++);
+        for (; pos < i && matrix.get(i, pos) == 0; pos++);
         prof[i + 1] = prof[i] + i - pos;
         for (int j = pos; j < i; j++)
         {
-            a_low.push_back(matrix[i][j]);
-            a_up.push_back(matrix[j][i]);
+            a_low.push_back(matrix.get(i, j));
+            a_up.push_back(matrix.get(j, i));
         }
     }
 }
-
-ProfileMatrix::ProfileMatrix(const QuadMatrix& qm)
-    : ProfileMatrix(qm.get_matrix())
-{}
 
 ProfileMatrix::ProfileMatrix(
     value_vec diag,
@@ -45,6 +43,34 @@ ProfileMatrix::ProfileMatrix(
     , a_up(std::move(up))
     , prof(std::move(prof))
 {}
+
+/*static*/ ProfileMatrix ProfileMatrix::lu_decompose(Matrix && matrix)
+{
+    auto dims = matrix.row_cnt();
+
+    assert(dims == matrix.col_cnt() && "Square matrix expected for LU-decomposition");
+
+    auto subtract_from_cell = [&matrix](id_t row, id_t col, id_t count, value_t cell) {
+        for (id_t k = 0; k < count; ++k) {
+            cell -= matrix.get(row, k) * matrix.get(k, col);
+        }
+        return cell;
+    };
+
+    value_t new_val;
+    for (id_t i = 0; i < dims; ++i) {
+        for (id_t j = 0; j < dims; ++j) {
+            new_val = matrix.get(i, j);
+            new_val = subtract_from_cell(i, j, std::min(i, j), new_val);
+            if (i > j) {
+                new_val /= matrix.get(j, j);
+            }
+            matrix.set(i, j, new_val);
+        }
+    }
+
+    return ProfileMatrix(matrix);
+}
 
 auto ProfileMatrix::get(id_t row, id_t col) const -> value_t /*override*/
 {
@@ -92,7 +118,7 @@ auto ProfileMatrix::get_ptr(id_t row, id_t col) -> value_t*
 }
 
 template<class T>
-void print_vector(std::ostream& os, std::vector<T> vec)
+void print_vector(std::ostream& os, const std::vector<T> & vec)
 {
     for (std::size_t i = 0; i < vec.size(); i++)
     {
@@ -101,6 +127,7 @@ void print_vector(std::ostream& os, std::vector<T> vec)
 }
 std::ostream& operator<<(std::ostream& os, const ProfileMatrix& pm)
 {
+    os << std::setprecision(5);
     print_vector(os, pm.diag);
     os << '\n';
     print_vector(os, pm.a_low);
