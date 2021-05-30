@@ -1,8 +1,11 @@
-﻿#include <iostream>
+﻿#include <algorithm>
+#include <iostream>
 #include <iomanip>
 #include <cmath>
+#include <random>
 #include <vector>
 
+#include "GaussSolver.h"
 #include "LUMatrixViews.h"
 #include "Matrix.h"
 #include "ProfileMatrix.h"
@@ -38,6 +41,32 @@ void print_matrix_wolfram(const Matrix & matrix)
     std::cout << "}";
 }
 
+void print_sole_volfram(const Matrix & a, const std::vector<double> & b)
+{
+    for (unsigned i = 0; i < a.row_cnt(); ++i) {
+        for (unsigned j = 0; j < a.col_cnt(); ++j) {
+            std::cout << (a.get(i, j) >= 0 ? "+" : "") << a.get(i, j) << " * " << static_cast<char>(j + 'a');
+        }
+        std::cout << " = " << b[i] << '\n';
+    }
+}
+
+void generate_and_solve_sole(Matrix && a)
+{
+    std::mt19937 rand(std::random_device{}());
+    std::uniform_real_distribution<double> dist(-100., 100.);
+
+    std::vector<double> b(a.col_cnt());
+    std::generate(b.begin(), b.end(), [&] { return dist(rand); });
+
+    print_sole_volfram(a, b);
+    std::cout << "\nresult:\n";
+    for (double el : GaussSolver::solve(std::move(a), std::move(b))) {
+        std::cout << el << " ";
+    }
+    std::cout << '\n';
+}
+
 int main()
 {
     std::cout << std::setprecision(5);
@@ -67,22 +96,6 @@ int main()
     // }
     print_matrix(qm);
     std::cout << '\n';
-    auto decomposition = ProfileMatrix::lu_decompose(std::move(qm));
-    std::cout << "decomposition:\n";
-    print_matrix(decomposition);
-    std::cout << '\n';
-    LMatrixView l_view{decomposition};
-    UMatrixView u_view{decomposition};
-
-    std::cout << "L:\n";
-    print_matrix(l_view);
-    std::cout << '\n';
-    print_matrix_wolfram(l_view);
-
-    std::cout << "\nU:\n";
-    print_matrix(u_view);
-    std::cout << '\n';
-    print_matrix_wolfram(u_view);
-    std::cout << '\n';
+    generate_and_solve_sole(std::move(qm));
     return 0;
 }
