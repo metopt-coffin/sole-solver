@@ -2,9 +2,65 @@
 #include "LUMatrixViews.h"
 #include "ProfileMatrix.h"
 
+#include <cmath>
+#include <unordered_map>
+
 auto GaussSolver::solve(Matrix&& a, std::vector<value_t>&& b)->std::vector<value_t>
 {
-    return b;
+    // map to track permutations
+    std::unordered_map<id_t, id_t> permutations;
+    for (id_t i = 0; i < b.size(); i++)
+    {
+        permutations[i] = i;
+    }
+
+    // forward
+    for (int i = 0; i < b.size(); i++)
+    {
+        id_t i_row = permutations[i];   // get index of current physical row
+        value_t pivot = a.get(i_row, i);    // and current max pivot element
+        id_t pivot_row = i;             // remember the virtual id of max pivot row
+        for (int j = i + 1; j < b.size(); j++)
+        {
+            id_t new_row = permutations[j];     // get index of next row
+            value_t new_val = a.get(new_row, i);    // get next value from (next_row, i)
+            if (new_val > pivot)    // relaxate maximum
+            {
+                pivot = new_val;
+                pivot_row = j;
+            }
+        }
+        std::swap(permutations[i], permutations[pivot_row]);    // virtually swap rows
+        i_row = permutations[i];    // get index of current physical row
+        for (int j = i + 1; j < b.size(); j++)
+        {
+            id_t j_row = permutations[j];   // get index of next physical row
+            value_t factor = a.get(j_row, i) / a.get(i_row, i);     // get factor that will be used to change values in this row
+            b[j_row] -= factor * b[i_row];  // change the vector b
+            for (int k = i + 1; k < b.size(); k++)
+            {
+                value_t val = a.get(j_row, k);  // get previous value
+                a.set(j_row, k, val - factor * a.get(i_row, k)); // set new value to the same place
+            }
+        }
+    }
+
+    // reverse
+    for (int i = b.size() - 1; i >= 0; i--)
+    {
+        id_t row = permutations[i]; // get index of current physical row
+        for (int j = b.size() - 1; j > i; j--)
+        {
+            b[row] -= a.get(row, j) * b[permutations[j]];    // subtract all elements a(i, j) * x_j, where j > i
+        }
+        b[row] /= a.get(row, i); // divide by element a(i, i);
+    }
+    std::vector<value_t> answer(b.size());
+    for (int i = 0; i < answer.size(); i++)
+    {
+        answer[i] = b[permutations[i]];
+    }
+    return answer;
 }
 
 /*static*/ auto GaussSolver::solve_lu(Matrix && a, std::vector<value_t> && b) -> std::vector<value_t>
