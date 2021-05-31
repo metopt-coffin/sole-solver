@@ -2,8 +2,12 @@
 #include "LUMatrixViews.h"
 #include "ProfileMatrix.h"
 
+auto GaussSolver::solve(Matrix&& a, std::vector<value_t>&& b)->std::vector<value_t>
+{
+    return b;
+}
 
-/*static*/ auto GaussSolver::solve(Matrix && a, std::vector<value_t> && b) -> std::vector<value_t>
+/*static*/ auto GaussSolver::solve_lu(Matrix && a, std::vector<value_t> && b) -> std::vector<value_t>
 {
 /*
     for i = [0; n):
@@ -16,10 +20,19 @@
     LMatrixView l(pm);
     UMatrixView u(pm);
 
-    for (id_t i = b.size() - 1; i != 0; --i) {
+    /*for (id_t i = b.size() - 1; i != 0; --i) {
         for (id_t j = 0; j < i; ++j) {
-            b[i] -= b[j] * l.get(i, j);
+            b[i] -= b[j] * (l.get(i, j) / l.get(j, j));
         }
+    }*/
+
+    for (int i = 0; i < b.size(); i++)
+    {
+        for (int j = i + 1; j < b.size(); j++)
+        {
+            b[j] -= b[i] * l.get(j, i) / l.get(i, i);
+        }
+        //b[i] /= l.get(i, i);
     }
 
 /*
@@ -37,9 +50,17 @@
     In straigth order
 */
 
-    for (id_t i = 0; i < b.size(); ++i) {
+    /*for (id_t i = 0; i < b.size(); ++i) {
         for (id_t j = i + 1; j < b.size(); ++j) {
             b[i] -= b[j] * u.get(i, j) / u.get(j, j);
+        }
+    }*/
+
+    for (int i = b.size() - 1; i >= 0; i--)
+    {
+        for (int j = i - 1; j >= 0; j--)
+        {
+            b[j] -= b[i] * u.get(j, i) / u.get(i, i);
         }
     }
 
