@@ -3,60 +3,88 @@
 #include "ProfileMatrix.h"
 
 #include <cmath>
-#include <unordered_map>
+#include <numeric>
 
-auto GaussSolver::solve(Matrix&& a, std::vector<value_t>&& b)->std::vector<value_t>
+/*static*/ auto GaussSolver::solve(Matrix&& a, std::vector<value_t>&& b) -> std::vector<value_t>
 {
-    // map to track permutations
-    std::unordered_map<id_t, id_t> permutations;
-    for (id_t i = 0; i < b.size(); i++)
-    {
-        permutations[i] = i;
-    }
+    /*
+     * We don't know what kind of matrix we received.
+     * Therefore, we can't swap rows in-place and have to remember all permutations we made.
+     */
+    std::vector<id_t> permutations(b.size());
+    std::iota(permutations.begin(), permutations.end(), 0);         // permutations[i] = i;
 
     // forward
     for (int i = 0; i < b.size(); i++)
     {
-        id_t i_row = permutations[i];   // get index of current physical row
-        value_t pivot = a.get(i_row, i);    // and current max pivot element
-        id_t pivot_row = i;             // remember the virtual id of max pivot row
+        /*
+         * Starting from here, 
+         *  "virtual" - indexes in matrix with swapped rows
+         *  "physical" - indexes in real matrix.
+         * Usually, we don't have to map column indexes as they remain the same. 
+         */
+        id_t i_row = permutations[i];                               // get physical index of current row
+        value_t pivot = a.get(i_row, i);                            // and current max pivot element
+        id_t pivot_row = i;                                         // remember the virtual index of max pivot row
+
+        /*
+         * Find the max pivot element.
+         * Look up in the next rows, because previous rows are already processed
+         */
         for (int j = i + 1; j < b.size(); j++)
         {
-            id_t new_row = permutations[j];     // get index of next row
-            value_t new_val = a.get(new_row, i);    // get next value from (next_row, i)
-            if (new_val > pivot)    // relaxate maximum
+            id_t new_row = permutations[j];                         // get physical index of row we look at now
+            value_t new_val = a.get(new_row, i);                    // get next value from physical matrix
+            if (new_val > pivot)                                    // relaxate maximum
             {
                 pivot = new_val;
                 pivot_row = j;
             }
         }
-        std::swap(permutations[i], permutations[pivot_row]);    // virtually swap rows
-        i_row = permutations[i];    // get index of current physical row
+        std::swap(permutations[i], permutations[pivot_row]);        // "swap" rows in virtual matrix
+        i_row = permutations[i];                                    // get physical index of current row (after swap)
+        /*
+         * Perform row operations and process the rest of the matrix
+         */
         for (int j = i + 1; j < b.size(); j++)
         {
-            id_t j_row = permutations[j];   // get index of next physical row
+            id_t j_row = permutations[j];                           // get physical index of row we change now
             value_t factor = a.get(j_row, i) / a.get(i_row, i);     // get factor that will be used to change values in this row
-            b[j_row] -= factor * b[i_row];  // change the vector b
+            b[j_row] -= factor * b[i_row];                          // change the vector b
+            /*
+             * Process the row using formula: 
+             *  a[i][j] = a[i][j] - factor * a[k][j], where k - index of row we subtract
+             */
             for (int k = i + 1; k < b.size(); k++)
             {
-                value_t val = a.get(j_row, k);  // get previous value
-                a.set(j_row, k, val - factor * a.get(i_row, k)); // set new value to the same place
+                value_t val = a.get(j_row, k);                      // get previous value
+                a.set(j_row, k, val - factor * a.get(i_row, k));    // set new value to the same place
             }
         }
     }
 
+    
     // reverse
+    /*
+     * Now we have an upper triangular matrix. 
+     * To get the solution we have to transfrom it to diagonal matrix, 
+     *  changing the vector b accordingly
+     */
     for (int i = b.size() - 1; i >= 0; i--)
     {
-        id_t row = permutations[i]; // get index of current physical row
+        id_t row = permutations[i];                                 // get physical index of current row
         for (int j = b.size() - 1; j > i; j--)
         {
-            b[row] -= a.get(row, j) * b[permutations[j]];    // subtract all elements a(i, j) * x_j, where j > i
-        }
-        b[row] /= a.get(row, i); // divide by element a(i, i);
+            b[row] -= a.get(row, j) * b[permutations[j]];           // subtract all elements a[i][j] * x[j], where j > i;
+        }                                                           //  we know answer x[j] as it is the already counted value in the vector b
+        b[row] /= a.get(row, i);                                    // divide by diagonal element a[i][i];
     }
+    
+    /*
+     * Write down the result vector in correct order
+     */
     std::vector<value_t> answer(b.size());
-    for (int i = 0; i < answer.size(); i++)
+    for (int i = 0; i < b.size(); i++)
     {
         answer[i] = b[permutations[i]];
     }
