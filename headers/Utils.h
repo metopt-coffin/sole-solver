@@ -24,7 +24,7 @@ struct Generator
     static QuadMatrix generate_quad_matrix(std::size_t dim, std::size_t width = UINT_MAX)
     {
         std::vector<std::vector<double>> m(dim, std::vector<double>(dim, 0.));
-        std::uniform_real_distribution<double> dist(-50000., 50000.);
+        std::uniform_real_distribution<double> dist(-100., 100.);
         for (int j = 0; j < dim; j++)
         {
             for (int i = j; i < std::min(j + width, dim); i++)
@@ -43,7 +43,7 @@ struct Generator
      */
     static ProfileMatrix generate_profile_matrix(const std::size_t dim, const std::size_t width = UINT_MAX)
     {
-        std::uniform_real_distribution<double> dist(-50000., 50000.);
+        std::uniform_real_distribution<double> dist(-100., 100.);
 
         std::vector<double> diag(dim);
         for (std::size_t i = 0; i < dim; i++)
