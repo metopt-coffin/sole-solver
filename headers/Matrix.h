@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <vector>
 
 /*
  * Abstract class representing two-dimensional matrix
@@ -25,4 +26,6 @@ public:
 
     virtual id_t row_cnt() const = 0;
     virtual id_t col_cnt() const = 0;
+
+    std::vector<value_t> operator*(const std::vector<value_t>& vec) const;
 };

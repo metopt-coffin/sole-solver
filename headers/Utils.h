@@ -24,7 +24,7 @@ struct Generator
     static QuadMatrix generate_quad_matrix(std::size_t dim, std::size_t width = UINT_MAX)
     {
         std::vector<std::vector<double>> m(dim, std::vector<double>(dim, 0.));
-        std::uniform_real_distribution<double> dist(-100., 100.);
+        std::uniform_real_distribution<double> dist(-limit, limit);
         for (int j = 0; j < dim; j++)
         {
             for (int i = j; i < std::min(j + width, dim); i++)
@@ -43,7 +43,7 @@ struct Generator
      */
     static ProfileMatrix generate_profile_matrix(const std::size_t dim, const std::size_t width = UINT_MAX)
     {
-        std::uniform_real_distribution<double> dist(-100., 100.);
+        std::uniform_real_distribution<double> dist(-limit, limit);
 
         std::vector<double> diag(dim);
         for (std::size_t i = 0; i < dim; i++)
@@ -68,6 +68,9 @@ struct Generator
         return ProfileMatrix(std::move(diag), std::move(a_low), std::move(a_up), std::move(profile));
     }
     
+    /*
+     * Generates a quadratic matrix and writes it down to file
+     */
     static void create_quad_matrix(const std::string& dir, const std::string& filename, std::size_t dim, std::size_t width = UINT_MAX)
     {
         fs::path p = ".";
@@ -77,6 +80,9 @@ struct Generator
         os << generate_quad_matrix(dim, width);
     }
 
+    /*
+     * Reads a qudratic matrix from file
+     */
     static QuadMatrix read_quad_matrix(const std::string& dir, const std::string& filename)
     {
         fs::path p = ".";
@@ -98,6 +104,9 @@ struct Generator
         return m;
     }
 
+    /*
+     * Generates a profile matrix and writes it down to file
+     */
     static void create_profile_matrix(const std::string& dir, const std::string& filename, std::size_t dim, std::size_t width = UINT_MAX)
     {
         fs::path p = ".";
@@ -107,13 +116,15 @@ struct Generator
         os << std::setw(10) << generate_profile_matrix(dim, width);
     }
 
+    /*
+     * Reads a profile matrix from file
+     */
     static ProfileMatrix read_profile_matrix(const std::string& dir, const std::string& filename)
     {
         fs::path p = ".";
         p /= dir;
         std::ifstream is(p / filename);
 
-        
         std::vector<double> diag;
         std::vector<double> low;
         std::vector<double> up;
@@ -126,9 +137,50 @@ struct Generator
         return ProfileMatrix(std::move(diag), std::move(low), std::move(up), std::move(prof));
     }
 
+    /*
+     * Reads a vector from file
+     */
+    static std::vector<double> read_vector(const std::string& dir, const std::string& filename)
+    {
+        fs::path p = ".";
+        p /= dir;
+        std::ifstream is(p / filename);
+
+        std::vector<double> read;
+        read_vec(is, read);
+        return read;
+    }
+
+    /*
+     * Generates vector of values with given length
+     */
+    static std::vector<double> generate_vector(std::size_t dim)
+    {
+        std::uniform_real_distribution<double> dist(-limit, limit);
+        std::vector<double> answer(dim);
+        for (double& elem : answer)
+        {
+            elem = dist(rand_gen);
+        }
+        return answer;
+    }
+
+    /*
+     * Create a test (matrix, answer vector, right part vector) and writes to given directory with given prefix
+     */
+    static void create_quad_test(const std::string& dir, const std::string& testname, const std::size_t& dim, const std::size_t& width = UINT_MAX)
+    {
+        create_test(dir, testname, std::move(generate_quad_matrix(dim, width)), std::move(generate_vector(dim)));
+    }
+    static void create_profile_test(const std::string& dir, const std::string& testname, const std::size_t& dim, const std::size_t& width = UINT_MAX)
+    {
+        create_test(dir, testname, std::move(generate_profile_matrix(dim, width)), std::move(generate_vector(dim)));
+    }
+
     static inline std::mt19937 rand_gen{std::random_device{}()};
+    static inline double limit{ 100. };
 private:
-    template<class T>
+    template <class T>
     static void read_vec(std::istream& is, std::vector<T>& vec)
     {
         std::string line;
@@ -139,5 +191,34 @@ private:
         {
             vec.push_back(val);
         }
+    }
+
+    template <class T>
+    static void print_vec(std::ostream& os, const std::vector<T>& vec)
+    {
+        for (const T& elem : vec)
+        {
+            os << elem << ' ';
+        }
+    }
+
+    template <class T>
+    static void create_test(const std::string& dir, const std::string& testname, T&& matrix, std::vector<double> answer)
+    {
+        fs::path p = ".";
+        p /= dir;
+        fs::create_directory(p);
+
+        std::string matrix_filename = testname + "_matrix.txt";
+        std::string answer_filename = testname + "_answer.txt";
+        std::string right_part_filename = testname + "_right.txt";
+        std::vector<double> right_part = matrix * answer;
+
+        std::ofstream os_matrix(p / matrix_filename);
+        std::ofstream os_answer(p / answer_filename);
+        std::ofstream os_right(p / right_part_filename);
+        os_matrix << matrix;
+        print_vec(os_answer, answer);
+        print_vec(os_right, right_part);
     }
 };
