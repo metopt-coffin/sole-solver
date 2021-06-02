@@ -58,12 +58,27 @@ void generate_and_solve_sole(Matrix && a)
 
     std::vector<double> b(a.col_cnt());
     std::generate(b.begin(), b.end(), [&] { return dist(rand); });
-
     print_sole_volfram(a, b);
-    std::cout << "\nresult:\n";
-    for (double el : GaussSolver::solve_lu(std::move(a), std::move(b))) {
+    QuadMatrix a_copy = static_cast<QuadMatrix&&>(a);
+    std::vector<double> b_copy = b;
+
+    std::cout << "\nLU result:\n";
+    auto res = GaussSolver::solve_lu(QuadMatrix(a_copy), std::move(b_copy));
+    for (double el : res.answer) {
         std::cout << el << " ";
     }
+    std::cout << std::endl;
+    std::cout << "Actions: " << res.actions;
+    std::cout << std::endl;
+
+    std::cout << "\nChoice result:\n";
+    res = GaussSolver::solve(std::move(a_copy), std::move(b));
+    for (double el : res.answer)
+    {
+        std::cout << el << " ";
+    }
+    std::cout << std::endl;
+    std::cout << "Actions: " << res.actions;
     std::cout << '\n';
 }
 

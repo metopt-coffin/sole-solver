@@ -5,8 +5,9 @@
 #include <cmath>
 #include <numeric>
 
-/*static*/ auto GaussSolver::solve(Matrix&& a, std::vector<value_t>&& b) -> std::vector<value_t>
+/*static*/ auto GaussSolver::solve(Matrix&& a, std::vector<value_t>&& b) -> Result
 {
+    id_t actions_cnt = 0;                                           // counter for mult and div operations
     /*
      * We don't know what kind of matrix we received.
      * Therefore, we can't swap rows in-place and have to remember all permutations we made.
@@ -14,7 +15,7 @@
     std::vector<id_t> permutations(b.size());
     std::iota(permutations.begin(), permutations.end(), 0);         // permutations[i] = i;
 
-    // forward
+    // straight
     for (int i = 0; i < b.size(); i++)
     {
         /*
@@ -51,6 +52,7 @@
             id_t j_row = permutations[j];                           // get physical index of row we change now
             value_t factor = a.get(j_row, i) / a.get(i_row, i);     // get factor that will be used to change values in this row
             b[j_row] -= factor * b[i_row];                          // change the vector b
+            actions_cnt += 2;
             /*
              * Process the row using formula: 
              *  a[i][j] = a[i][j] - factor * a[k][j], where k - index of row we subtract
@@ -59,6 +61,7 @@
             {
                 value_t val = a.get(j_row, k);                      // get previous value
                 a.set(j_row, k, val - factor * a.get(i_row, k));    // set new value to the same place
+                actions_cnt++;
             }
         }
     }
@@ -76,8 +79,10 @@
         for (int j = b.size() - 1; j > i; j--)
         {
             b[row] -= a.get(row, j) * b[permutations[j]];           // subtract all elements a[i][j] * x[j], where j > i;
+            actions_cnt++;
         }                                                           //  we know answer x[j] as it is the already counted value in the vector b
         b[row] /= a.get(row, i);                                    // divide by diagonal element a[i][i];
+        actions_cnt++;
     }
     
     /*
@@ -88,71 +93,52 @@
     {
         answer[i] = b[permutations[i]];
     }
-    return answer;
+    return { answer, actions_cnt };
 }
 
-/*static*/ auto GaussSolver::solve_lu(Matrix && a, std::vector<value_t> && b) -> std::vector<value_t>
+/*static*/ auto GaussSolver::solve_lu(Matrix && a, std::vector<value_t> && b) -> Result
 {
-/*
-    for i = [0; n):
-       b'[i] = b[i] - sum(j = [0; i); b[j] * a[i][j] / a[j][j])
-    Will go in reverse order, so we neither change values that are used later, nor copy `b` vector
-
-    For L matrix a[j][j] is always 1 for any j
-*/
+    id_t actions_cnt = 0;                                           // counter for mult and div operations
+    /*
+     * As we have LU-decomposition of matrix solving a system of linear equations is easy.
+     * First, we have to solve equation L * y = b, where L - lower triangular, b - given vector of values,
+     *      and, thus, find vector y.
+     * Second, we solve equation U * x = y, where U - upper triangular. Thus, we find answer - vector x.
+     */
     ProfileMatrix pm = ProfileMatrix::lu_decompose(std::move(a));
     LMatrixView l(pm);
     UMatrixView u(pm);
 
-    /*for (id_t i = b.size() - 1; i != 0; --i) {
-        for (id_t j = 0; j < i; ++j) {
-            b[i] -= b[j] * (l.get(i, j) / l.get(j, j));
-        }
-    }*/
-
+    /*
+     * L is a lower triangular matrix.
+     * Therefore, all we have to do is to transform it to diagonal form.
+     * We can do it by using Gaussian elimination algorithm and only in a straight way.
+     * Note, that we don't have to divide by these elements, as they are equal to one.
+     */
     for (int i = 0; i < b.size(); i++)
     {
         for (int j = i + 1; j < b.size(); j++)
         {
-            b[j] -= b[i] * l.get(j, i) / l.get(i, i);
+            b[j] -= b[i] * l.get(j, i) / l.get(i, i);               // don't forget to change vector b
+            actions_cnt += 2;
         }
-        //b[i] /= l.get(i, i);
     }
 
-/*
-    Ax = b
-    |A = LU|
-    LUx = b
-    |Ux = y|
-    Ly = b
-    After changes L = diag(1...1), y = b'
-    Ux = y <=> Ux = b'
-
-    If we also turn U into diag matrix: diag(u_11, u_22, ... , u_nn), then x[i] = b''[i] / u[i][i]
-    for i = [0; n)
-        b''[i] = b'[i] - sum(j = [i + 1; n); b'[j] * u[i][j] / u[j][j])
-    In straigth order
-*/
-
-    /*for (id_t i = 0; i < b.size(); ++i) {
-        for (id_t j = i + 1; j < b.size(); ++j) {
-            b[i] -= b[j] * u.get(i, j) / u.get(j, j);
-        }
-    }*/
-
+    /*
+     * U is an upper triangular matrix.
+     * We also have to transform it and we will use Gaussian elimination again, 
+     *      but in a reversed way now.
+     */
     for (int i = b.size() - 1; i >= 0; i--)
     {
         for (int j = i - 1; j >= 0; j--)
         {
-            b[j] -= b[i] * u.get(j, i) / u.get(i, i);
+            b[j] -= b[i] * u.get(j, i) / u.get(i, i);               // don't forget to change vector b
+            actions_cnt += 2;
         }
+        b[i] /= u.get(i, i);                                        // Now we have to divide.
+        actions_cnt++;
     }
 
-/*
-    As was said, x[i] = b''[i] / u[i][i]
-*/
-    for (id_t i = 0; i < b.size(); ++i) {
-        b[i] /= u.get(i, i);
-    }
-    return b;
+    return { b, actions_cnt };
 }
