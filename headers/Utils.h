@@ -1,6 +1,7 @@
 #pragma once
 #include <algorithm>
 #include <climits>
+#include <cmath>
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
@@ -17,6 +18,8 @@ namespace fs = std::filesystem;
  */
 struct Generator
 {
+    /*--------------------------------QUADRATIC MATRIX--------------------------------*/
+
     /*
      * Generates a multidiagonal matrix with size of "dim"
      * and position of non-zero elements closer than "width" to the main diagonal
@@ -37,37 +40,6 @@ struct Generator
         return QuadMatrix(std::move(m));
     }
 
-    /*
-     * Generates a multidiagonal matrix in a profile format with size of "dim"
-     * and position of non-zero elements closer than "width" to the main diagonal
-     */
-    static ProfileMatrix generate_profile_matrix(const std::size_t dim, const std::size_t width = UINT_MAX)
-    {
-        std::uniform_real_distribution<double> dist(-limit, limit);
-
-        std::vector<double> diag(dim);
-        for (std::size_t i = 0; i < dim; i++)
-        { diag[i] = dist(rand_gen); }
-
-        std::vector<std::size_t> profile(dim + 1);
-        if (dim != 0)
-        { profile[0] = profile[1] = 1; }
-        for (std::size_t i = 2; i <= dim; i++)
-        {
-            profile[i] = profile[i - 1] + rand_gen() % (std::min(width - 1, i - 1) + 1);
-        }
-
-        std::vector<double> a_low(profile.back() - 1);
-        std::vector<double> a_up(profile.back() - 1);
-        for (std::size_t i = 0; i < a_low.size(); i++)
-        {
-            a_low[i] = dist(rand_gen);
-            a_up[i] = dist(rand_gen);
-        }
-
-        return ProfileMatrix(std::move(diag), std::move(a_low), std::move(a_up), std::move(profile));
-    }
-    
     /*
      * Generates a quadratic matrix and writes it down to file
      */
@@ -105,6 +77,69 @@ struct Generator
     }
 
     /*
+     * Create a test (matrix, answer vector, right part vector) and writes to given directory with given prefix
+     */
+    static void create_quad_test(const std::string& dir, const std::string& testname, const std::size_t& dim, const std::size_t& width = UINT_MAX)
+    {
+        create_test(dir, testname, std::move(generate_quad_matrix(dim, width)), std::move(generate_vector(dim)));
+    }
+
+    /*------------------------------------PROFILE MATRIX------------------------------------*/
+
+    /*
+     * Generates a multidiagonal matrix in a profile format with size of "dim"
+     * and position of non-zero elements closer than "width" to the main diagonal
+     */
+    static ProfileMatrix generate_profile_matrix(const std::size_t dim, const std::size_t width = UINT_MAX)
+    {
+        std::uniform_real_distribution<double> dist(-limit, limit);
+
+        std::vector<double> diag(dim);
+        for (std::size_t i = 0; i < dim; i++)
+        { diag[i] = dist(rand_gen); }
+
+        std::vector<std::size_t> profile(dim + 1);
+        if (dim != 0)
+        { profile[0] = profile[1] = 1; }
+        for (std::size_t i = 2; i <= dim; i++)
+        {
+            profile[i] = profile[i - 1] + rand_gen() % (std::min(width - 1, i - 1) + 1);
+        }
+
+        std::vector<double> a_low(profile.back() - 1);
+        std::vector<double> a_up(profile.back() - 1);
+        for (std::size_t i = 0; i < a_low.size(); i++)
+        {
+            a_low[i] = dist(rand_gen);
+            a_up[i] = dist(rand_gen);
+        }
+
+        return ProfileMatrix(std::move(diag), std::move(a_low), std::move(a_up), std::move(profile));
+    }
+
+    static ProfileMatrix generate_cond_profile_matrix(const std::size_t& dim, const int& k, const std::size_t& width = UINT_MAX)
+    {
+        std::uniform_int_distribution<int> dist(-4, 0);
+
+        std::vector<std::vector<double>> m(dim, std::vector<double>(dim, 0.));
+        for (int i = 0; i < dim; i++)
+        {
+            int sum = 0;
+            for (int j = 0; j < dim; j++)
+            {
+                if (i != j)
+                {
+                    sum += m[i][j] = dist(rand_gen);
+                }
+            }
+            m[i][i] = -sum;
+            if (!i)
+                m[i][i] += std::pow(10., -k);
+        }
+        return ProfileMatrix(QuadMatrix(m));
+    }
+
+    /*
      * Generates a profile matrix and writes it down to file
      */
     static void create_profile_matrix(const std::string& dir, const std::string& filename, std::size_t dim, std::size_t width = UINT_MAX)
@@ -138,6 +173,16 @@ struct Generator
     }
 
     /*
+     * Create a test (matrix, answer vector, right part vector) and writes to given directory with given k prefix
+     */
+    static void create_profile_test(const std::string& dir, const std::size_t& k, const std::size_t& dim, const std::size_t& width = UINT_MAX)
+    {
+        create_test(dir, std::to_string(k), std::move(generate_cond_profile_matrix(dim, k, width)), std::move(generate_vector(dim)));
+    }
+
+    /*-----------------------------------MISCELLANEOUS-----------------------------------*/
+
+    /*
      * Reads a vector from file
      */
     static std::vector<double> read_vector(const std::string& dir, const std::string& filename)
@@ -152,6 +197,20 @@ struct Generator
     }
 
     /*
+     * Writes a vector from file
+     */
+    template<class T>
+    static void print_vector(const std::string& dir, const std::string& filename, const std::vector<T>& v)
+    {
+        fs::path p = ".";
+        p /= dir;
+        fs::create_directory(p);
+        std::ofstream os(p / filename);
+
+        print_vec(os, v);
+    }
+
+    /*
      * Generates vector of values with given length
      */
     static std::vector<double> generate_vector(std::size_t dim)
@@ -163,18 +222,6 @@ struct Generator
             elem = dist(rand_gen);
         }
         return answer;
-    }
-
-    /*
-     * Create a test (matrix, answer vector, right part vector) and writes to given directory with given prefix
-     */
-    static void create_quad_test(const std::string& dir, const std::string& testname, const std::size_t& dim, const std::size_t& width = UINT_MAX)
-    {
-        create_test(dir, testname, std::move(generate_quad_matrix(dim, width)), std::move(generate_vector(dim)));
-    }
-    static void create_profile_test(const std::string& dir, const std::string& testname, const std::size_t& dim, const std::size_t& width = UINT_MAX)
-    {
-        create_test(dir, testname, std::move(generate_profile_matrix(dim, width)), std::move(generate_vector(dim)));
     }
 
     static inline std::mt19937 rand_gen{std::random_device{}()};

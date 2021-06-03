@@ -2,6 +2,7 @@
 #include <iostream>
 #include <iomanip>
 #include <cmath>
+#include <fstream>
 #include <random>
 #include <vector>
 
@@ -52,7 +53,7 @@ void print_sole_volfram(const Matrix & a, const std::vector<double> & b)
 }
 
 template <class T>
-void solve_sole(T&& a, std::vector<double>&& b)
+GaussSolver::Result solve_sole(T&& a, std::vector<double>&& b)
 {
     print_sole_volfram(a, b);
     T a_copy = std::move(a);
@@ -67,8 +68,9 @@ void solve_sole(T&& a, std::vector<double>&& b)
     std::cout << std::endl;
     std::cout << "Actions: " << res.actions;
     std::cout << std::endl;
+    return res;
 
-    std::cout << "\nChoice result:\n";
+   /* std::cout << "\nChoice result:\n";
     res = GaussSolver::solve(std::move(a_copy), std::move(b));
     for (double el : res.answer)
     {
@@ -76,7 +78,7 @@ void solve_sole(T&& a, std::vector<double>&& b)
     }
     std::cout << std::endl;
     std::cout << "Actions: " << res.actions;
-    std::cout << '\n';
+    std::cout << '\n';*/
 }
 
 template <class T>
@@ -94,21 +96,28 @@ int main()
 {
     std::cout << std::setprecision(5);
     std::cout << "Work in progress ฅ^•ﻌ•^ฅ" << std::endl;
-    const int SZ = 4;
+    const int SZ = 10;
     const std::string dir = "quad_test";
-    const std::string pref = "1";
-    Generator::create_quad_test(dir, pref, SZ);
-    QuadMatrix qm = Generator::read_quad_matrix(dir, pref + "_matrix.txt");
-    std::vector<double> answer = Generator::read_vector(dir, pref + "_answer.txt");
-    std::vector<double> right = Generator::read_vector(dir, pref + "_right.txt");
-    print_matrix(qm);
-    std::cout << std::endl;
-    solve_sole(std::move(qm), std::move(right));
-    std::cout << std::endl;
-    std::cout << "Ideal answer:\n";
-    for (const auto& elem : answer)
+    for (int k = 0; k < 10; k++)
     {
-        std::cout << elem << ' ';
+        const std::string pref = std::to_string(k);
+        Generator::create_profile_test(dir, k, SZ);
+        ProfileMatrix qm = Generator::read_profile_matrix(dir, pref + "_matrix.txt");
+        std::vector<double> answer = Generator::read_vector(dir, pref + "_answer.txt");
+        std::vector<double> right = Generator::read_vector(dir, pref + "_right.txt");
+        print_matrix(qm);
+        std::cout << std::endl;
+        auto res = solve_sole(std::move(qm), std::move(right));
+        
+        Generator::print_vector(dir, pref + "_result.txt", res.answer);
+
+        std::cout << std::endl;
+        std::cout << "Ideal answer:\n";
+        for (const auto& elem : answer)
+        {
+            std::cout << elem << ' ';
+        }
+        std::cout << std::endl;
     }
     return 0;
 }
