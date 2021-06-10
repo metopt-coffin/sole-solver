@@ -42,8 +42,8 @@
                 pivot_row = j;
             }
         }
-        if (std::abs(pivot) < 1e-20)                                  // if pivot element is zero, exit. Hope that 10^-20 is enough for epsilon.
-        { return { b, Result::FAILED }; }                             //    (just a thought: probably, should add epsilon to the function's signature?)
+        if (std::abs(pivot) < 1e-20)                                // if pivot element is zero, exit. Hope that 10^-20 is enough for epsilon.
+        { return { b, Result::FAILED }; }                           //    (just a thought: probably, should add epsilon to the function's signature?)
 
         std::swap(permutations[i], permutations[pivot_row]);        // "swap" rows in virtual matrix
         i_row = permutations[i];                                    // get physical index of current row (after swap)
@@ -133,7 +133,7 @@
     {
         for (int j = i + 1; j < b.size(); j++)
         {
-            if (std::abs(l.get(i, i)) < 1e-20)
+            if (std::abs(l.get(i, i)) < 1e-20)                      // TODO: temp
             { std::cerr << "divide by zero, L\n"; }
             b[j] -= b[i] * l.get(j, i) / l.get(i, i);               // don't forget to change vector b
             actions_cnt += 2;
@@ -149,7 +149,7 @@
     {
         for (int j = i - 1; j >= 0; j--)
         {
-            if (std::abs(u.get(i, i)) < 1e-20)
+            if (std::abs(u.get(i, i)) < 1e-20)                      // TODO: temp
             { std::cerr << "divide by zero, U\n"; }
             b[j] -= b[i] * u.get(j, i) / u.get(i, i);               // don't forget to change vector b
             actions_cnt += 2;
