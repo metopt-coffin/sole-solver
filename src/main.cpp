@@ -59,7 +59,7 @@ GaussSolver::Result solve_sole(T&& a, std::vector<double>&& b)
     T a_copy = std::move(a);
     std::vector<double> b_copy = b;
 
-    std::cout << "\nLU result:\n";
+    std::cout << "\nLU result:\n\n";
     auto res = GaussSolver::solve_lu(T(a_copy), std::move(b_copy));
     for (double el : res.answer)
     {
@@ -94,22 +94,22 @@ void generate_and_solve_sole(T && a)
 
 int main()
 {
-    std::cout << std::setprecision(5);
+    std::cout << std::setprecision(10);
     std::cout << "Work in progress ฅ^•ﻌ•^ฅ" << std::endl;
     const int SZ = 10;
-    const std::string dir = "quad_test";
+    const std::string dir1 = "quad_cond_test";
     for (int k = 0; k < 10; k++)
     {
         const std::string pref = std::to_string(k);
-        Generator::create_profile_test(dir, k, SZ);
-        ProfileMatrix qm = Generator::read_profile_matrix(dir, pref + "_matrix.txt");
-        std::vector<double> answer = Generator::read_vector(dir, pref + "_answer.txt");
-        std::vector<double> right = Generator::read_vector(dir, pref + "_right.txt");
+        Generator::create_profile_cond_test(dir1, k, SZ);
+        ProfileMatrix qm = Generator::read_profile_matrix(dir1, pref + "_matrix.txt");
+        std::vector<double> answer = Generator::read_vector(dir1, pref + "_answer.txt");
+        std::vector<double> right = Generator::read_vector(dir1, pref + "_right.txt");
         print_matrix(qm);
         std::cout << std::endl;
         auto res = solve_sole(std::move(qm), std::move(right));
         
-        Generator::print_vector(dir, pref + "_result.txt", res.answer);
+        Generator::print_vector(dir1, pref + "_result.txt", res.answer);
 
         std::cout << std::endl;
         std::cout << "Ideal answer:\n";
@@ -117,6 +117,30 @@ int main()
         {
             std::cout << elem << ' ';
         }
+        std::cout << std::endl;
+        std::cout << std::endl;
+    }
+    const std::string dir2 = "quad_gilbert_test";
+    for (int sz = 10; sz <= 30; sz += 10)
+    {
+        const std::string pref = std::to_string(sz);
+        Generator::create_profile_gilbert_test(dir2, sz);
+        ProfileMatrix qm = Generator::read_profile_matrix(dir2, pref + "_matrix.txt");
+        std::vector<double> answer = Generator::read_vector(dir2, pref + "_answer.txt");
+        std::vector<double> right = Generator::read_vector(dir2, pref + "_right.txt");
+        print_matrix(qm);
+        std::cout << std::endl;
+        auto res = solve_sole(std::move(qm), std::move(right));
+
+        Generator::print_vector(dir2, pref + "_result.txt", res.answer);
+
+        std::cout << std::endl;
+        std::cout << "Ideal answer:\n";
+        for (const auto& elem : answer)
+        {
+            std::cout << elem << ' ';
+        }
+        std::cout << std::endl;
         std::cout << std::endl;
     }
     return 0;

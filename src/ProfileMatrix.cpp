@@ -122,12 +122,12 @@ void print_vector(std::ostream& os, const std::vector<T> & vec)
 {
     for (std::size_t i = 0; i < vec.size(); i++)
     {
-        os << vec[i] << ' ';
+        os << vec[i] << '\t';
     }
 }
 std::ostream& operator<<(std::ostream& os, const ProfileMatrix& pm)
 {
-    os << std::setprecision(5);
+    os << std::setprecision(10);
     print_vector(os, pm.diag);
     os << '\n';
     print_vector(os, pm.a_low);

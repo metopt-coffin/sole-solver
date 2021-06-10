@@ -36,12 +36,15 @@
         {
             id_t new_row = permutations[j];                         // get physical index of row we look at now
             value_t new_val = a.get(new_row, i);                    // get next value from physical matrix
-            if (new_val > pivot)                                    // relaxate maximum
+            if (std::abs(new_val) > std::abs(pivot))                // relaxate maximum
             {
                 pivot = new_val;
                 pivot_row = j;
             }
         }
+        if (std::abs(pivot) < 1e-20)                                  // if pivot element is zero, exit. Hope that 10^-20 is enough for epsilon.
+        { return { b, Result::FAILED }; }                             //    (just a thought: probably, should add epsilon to the function's signature?)
+
         std::swap(permutations[i], permutations[pivot_row]);        // "swap" rows in virtual matrix
         i_row = permutations[i];                                    // get physical index of current row (after swap)
         /*
@@ -109,6 +112,17 @@
     LMatrixView l(pm);
     UMatrixView u(pm);
 
+    std::cout << "LU-decomposed:\n";                                // TODO: remove it or write a func for it
+    for (int i = 0; i < pm.row_cnt(); i++)
+    {
+        for (int j = 0; j < pm.col_cnt(); j++)
+        {
+            std::cout << ((i <= j) ? u.get(i, j) : l.get(i, j)) << ' ';
+        }
+        std::cout << std::endl;
+    }
+    std::cout << std::endl;
+
     /*
      * L is a lower triangular matrix.
      * Therefore, all we have to do is to transform it to diagonal form.
@@ -119,6 +133,8 @@
     {
         for (int j = i + 1; j < b.size(); j++)
         {
+            if (std::abs(l.get(i, i)) < 1e-20)
+            { std::cerr << "divide by zero, L\n"; }
             b[j] -= b[i] * l.get(j, i) / l.get(i, i);               // don't forget to change vector b
             actions_cnt += 2;
         }
@@ -133,6 +149,8 @@
     {
         for (int j = i - 1; j >= 0; j--)
         {
+            if (std::abs(u.get(i, i)) < 1e-20)
+            { std::cerr << "divide by zero, U\n"; }
             b[j] -= b[i] * u.get(j, i) / u.get(i, i);               // don't forget to change vector b
             actions_cnt += 2;
         }

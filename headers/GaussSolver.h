@@ -12,6 +12,11 @@ public:
 
     struct Result
     {
+        /*
+         * Special value for the case if computation is failed
+         */
+        constexpr static id_t FAILED = -1;
+
         std::vector<value_t> answer;
         id_t actions;
     };

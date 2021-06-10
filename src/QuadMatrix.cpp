@@ -36,7 +36,7 @@ std::ostream& operator<<(std::ostream& os, const QuadMatrix& qm)
     {
         for (int j = 0; j < size; j++)
         {
-            os << qm.get(i, j) << ' ';
+            os << qm.get(i, j) << '\t';
         }
         os << '\n';
     }
