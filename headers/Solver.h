@@ -4,7 +4,7 @@
 
 #include <vector>
 
-class GaussSolver
+class Solver
 {
 public:
     using value_t = double;
@@ -13,9 +13,10 @@ public:
     struct Result
     {
         /*
-         * Special value for the case if computation is failed
+         * Special values for different error cases
          */
         constexpr static id_t FAILED = -1;
+        constexpr static id_t UNTRUSTED = -2;
 
         std::vector<value_t> answer;
         id_t actions;
@@ -28,6 +29,6 @@ public:
     /*
      * Solve a system of linear equations using Gauss with pivot element choice
      */
-    static Result solve(Matrix && a, std::vector<value_t> && b);
+    static Result solve_gauss(Matrix && a, std::vector<value_t> && b);
 
 };

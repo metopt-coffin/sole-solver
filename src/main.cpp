@@ -6,7 +6,7 @@
 #include <random>
 #include <vector>
 
-#include "GaussSolver.h"
+#include "Solver.h"
 #include "LUMatrixViews.h"
 #include "Matrix.h"
 #include "ProfileMatrix.h"
@@ -53,21 +53,35 @@ void print_sole_volfram(const Matrix & a, const std::vector<double> & b)
 }
 
 template <class T>
-GaussSolver::Result solve_sole(T&& a, std::vector<double>&& b)
+Solver::Result solve_sole(T&& a, std::vector<double>&& b)
 {
     print_sole_volfram(a, b);
     T a_copy = std::move(a);
     std::vector<double> b_copy = b;
 
     std::cout << "\nLU result:\n\n";
-    auto res = GaussSolver::solve_lu(T(a_copy), std::move(b_copy));
-    for (double el : res.answer)
+    auto res = Solver::solve_lu(T(a_copy), std::move(b_copy));
+    if (res.actions == Solver::Result::FAILED)
     {
-        std::cout << el << " ";
+        std::cout << "Method failed" << std::endl;
     }
-    std::cout << std::endl;
-    std::cout << "Actions: " << res.actions;
-    std::cout << std::endl;
+    else
+    {
+        for (double el : res.answer)
+        {
+            std::cout << el << " ";
+        }
+        std::cout << std::endl;
+        if (res.actions == Solver::Result::UNTRUSTED)
+        {
+            std::cout << "Results cannot be trusted";
+        }
+        else
+        { 
+            std::cout << "Actions: " << res.actions;
+        }
+        std::cout << std::endl;
+    }
     return res;
 
    /* std::cout << "\nChoice result:\n";
@@ -120,28 +134,28 @@ int main()
         std::cout << std::endl;
         std::cout << std::endl;
     }
-    const std::string dir2 = "quad_gilbert_test";
-    for (int sz = 10; sz <= 30; sz += 10)
-    {
-        const std::string pref = std::to_string(sz);
-        Generator::create_profile_gilbert_test(dir2, sz);
-        ProfileMatrix qm = Generator::read_profile_matrix(dir2, pref + "_matrix.txt");
-        std::vector<double> answer = Generator::read_vector(dir2, pref + "_answer.txt");
-        std::vector<double> right = Generator::read_vector(dir2, pref + "_right.txt");
-        print_matrix(qm);
-        std::cout << std::endl;
-        auto res = solve_sole(std::move(qm), std::move(right));
+    //const std::string dir2 = "quad_gilbert_test";
+    //for (int sz = 10; sz <= 100; sz += 10)
+    //{
+    //    const std::string pref = std::to_string(sz);
+    //    Generator::create_profile_gilbert_test(dir2, sz);
+    //    ProfileMatrix qm = Generator::read_profile_matrix(dir2, pref + "_matrix.txt");
+    //    std::vector<double> answer = Generator::read_vector(dir2, pref + "_answer.txt");
+    //    std::vector<double> right = Generator::read_vector(dir2, pref + "_right.txt");
+    //    print_matrix(qm);
+    //    std::cout << std::endl;
+    //    auto res = solve_sole(std::move(qm), std::move(right));
 
-        Generator::print_vector(dir2, pref + "_result.txt", res.answer);
+    //    Generator::print_vector(dir2, pref + "_result.txt", res.answer);
 
-        std::cout << std::endl;
-        std::cout << "Ideal answer:\n";
-        for (const auto& elem : answer)
-        {
-            std::cout << elem << ' ';
-        }
-        std::cout << std::endl;
-        std::cout << std::endl;
-    }
+    //    std::cout << std::endl;
+    //    std::cout << "Ideal answer:\n";
+    //    for (const auto& elem : answer)
+    //    {
+    //        std::cout << elem << ' ';
+    //    }
+    //    std::cout << std::endl;
+    //    std::cout << std::endl;
+    //}
     return 0;
 }

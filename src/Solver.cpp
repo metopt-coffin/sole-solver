@@ -1,11 +1,11 @@
-#include "GaussSolver.h"
+#include "Solver.h"
 #include "LUMatrixViews.h"
 #include "ProfileMatrix.h"
 
 #include <cmath>
 #include <numeric>
 
-/*static*/ auto GaussSolver::solve(Matrix&& a, std::vector<value_t>&& b) -> Result
+/*static*/ auto Solver::solve_gauss(Matrix&& a, std::vector<value_t>&& b) -> Result
 {
     id_t actions_cnt = 0;                                           // counter for mult and div operations
     /*
@@ -99,8 +99,9 @@
     return { answer, actions_cnt };
 }
 
-/*static*/ auto GaussSolver::solve_lu(Matrix && a, std::vector<value_t> && b) -> Result
+/*static*/ auto Solver::solve_lu(Matrix && a, std::vector<value_t> && b) -> Result
 {
+    bool untrusted_flag = false;                                    // flag for division by near-epsilon number
     id_t actions_cnt = 0;                                           // counter for mult and div operations
     /*
      * As we have LU-decomposition of matrix solving a system of linear equations is easy.
@@ -127,34 +128,31 @@
      * L is a lower triangular matrix.
      * Therefore, all we have to do is to transform it to diagonal form.
      * We can do it by using Gaussian elimination algorithm and only in a straight way.
+     * Moreover, we don't have to change the matrix, we need to change only vector b.
      * Note, that we don't have to divide by these elements, as they are equal to one.
      */
     for (int i = 0; i < b.size(); i++)
     {
         for (int j = i + 1; j < b.size(); j++)
         {
-            if (std::abs(l.get(i, i)) < 1e-20)                      // TODO: temp
-            { std::cerr << "divide by zero, L\n"; }
-            b[j] -= b[i] * l.get(j, i) / l.get(i, i);               // don't forget to change vector b
-            actions_cnt += 2;
+            b[j] -= b[i] * l.get(j, i);
+            actions_cnt++;
         }
     }
 
     /*
      * U is an upper triangular matrix.
-     * We also have to transform it and we will use Gaussian elimination again, 
+     * We also have to transform it and we will use Gaussian elimination again,
      *      but in a reversed way now.
      */
     for (int i = b.size() - 1; i >= 0; i--)
     {
-        for (int j = i - 1; j >= 0; j--)
+        for (int j = i + 1; j < b.size(); j++)
         {
-            if (std::abs(u.get(i, i)) < 1e-20)                      // TODO: temp
-            { std::cerr << "divide by zero, U\n"; }
-            b[j] -= b[i] * u.get(j, i) / u.get(i, i);               // don't forget to change vector b
-            actions_cnt += 2;
+            b[i] -= u.get(i, j) * b[j];
+            actions_cnt++;
         }
-        b[i] /= u.get(i, i);                                        // Now we have to divide.
+        b[i] /= u.get(i, i);
         actions_cnt++;
     }
 
