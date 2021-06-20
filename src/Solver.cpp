@@ -96,8 +96,8 @@ namespace
                 pivot_row = j;
             }
         }
-        //if (std::abs(pivot) < 1e-20)                                // if pivot element is zero, exit. Hope that 10^-20 is enough for epsilon.
-        //{ return { b, Result::FAILED }; }                           //    (just a thought: probably, should add epsilon to the function's signature?)
+        if (std::abs(pivot) < 1e-10)                                // if pivot element is zero, exit. 
+        { return { b, Result::FAILED }; }
 
         std::swap(permutations[i], permutations[pivot_row]);        // "swap" rows in virtual matrix
         i_row = permutations[i];                                    // get physical index of current row (after swap)
