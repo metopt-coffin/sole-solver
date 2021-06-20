@@ -84,6 +84,55 @@ struct Generator
         create_test(dir, testname, std::move(generate_quad_matrix(dim, width)), std::move(generate_vector(dim)));
     }
 
+    /*
+     * Create a test (matrix, answer vector, right part vector) for the fourth task and writes to given directory with given k prefix
+     */
+    static void create_quad_cond_test(const std::string& dir, const int& k, const std::size_t& dim, const std::size_t& width = UINT_MAX)
+    {
+        create_test(dir, std::to_string(k),
+                    std::move(generate_test_quad_matrix(dim, [k, width](std::vector<std::vector<double>>& matrix)
+                                                           {
+                                                               const std::size_t dim = matrix.size();
+                                                               std::uniform_int_distribution<int> dist(-4, 0);
+                                                               for (int i = 0; i < dim; i++)
+                                                               {
+                                                                   double sum = 0;
+                                                                   for (int j = 0; j < dim; j++)
+                                                                   {
+                                                                       if (i != j)
+                                                                       {
+                                                                           sum += matrix[i][j] = dist(Generator::rand_gen);
+                                                                       }
+                                                                   }
+                                                                   matrix[i][i] = -sum;
+                                                                   if (!i)
+                                                                       matrix[i][i] += std::pow(10., -k);
+                                                               }
+                                                           })),
+                    std::move(generate_vector(dim)));
+    }
+
+    /*
+     * Create a test (matrix, answer vector, right part vector) for the fourth task and writes to given directory with given k prefix
+     * Note, that as we have zero-numeration we have to use changed formula: (i + j - 1) -> ((i + 1) + (j + 1) - 1) = (i + j + 1)
+     */
+    static void create_quad_gilbert_test(const std::string& dir, const std::size_t& dim, const std::size_t& width = UINT_MAX)
+    {
+        create_test(dir, std::to_string(dim),
+                    std::move(generate_test_quad_matrix(dim, [width](std::vector<std::vector<double>>& matrix)
+                                                           {
+                                                               const std::size_t dim = matrix.size();
+                                                               for (int i = 0; i < dim; i++)
+                                                               {
+                                                                   for (int j = 0; j < dim; j++)
+                                                                   {
+                                                                        matrix[i][j] = 1. / (i + j + 1.);
+                                                                   }
+                                                               }
+                                                           })),
+                    std::move(generate_vector(dim)));
+    }
+
     /*------------------------------------PROFILE MATRIX------------------------------------*/
 
     /*
@@ -152,21 +201,20 @@ struct Generator
 
     /*
      * Create a test (matrix, answer vector, right part vector) for the second task and writes to given directory with given k prefix
-     * TODO: apply width, so it generate diagonal or lane matrixes
      */
     static void create_profile_cond_test(const std::string& dir, const int& k, const std::size_t& dim, const std::size_t& width = UINT_MAX)
     {
         create_test(dir, std::to_string(k),
-                    std::move(generate_test_profile_matrix(dim, [k](std::vector<std::vector<double>>& matrix)
+                    std::move(generate_test_profile_matrix(dim, [k, width](std::vector<std::vector<double>>& matrix)
                                                            {
                                                                const std::size_t dim = matrix.size();
                                                                std::uniform_int_distribution<int> dist(-4, 0);
                                                                for (int i = 0; i < dim; i++)
                                                                {
-                                                                   int sum = 0;
+                                                                   double sum = 0;
                                                                    for (int j = 0; j < dim; j++)
                                                                    {
-                                                                       if (i != j)
+                                                                       if (i != j && std::abs(i - j) <= width)
                                                                        {
                                                                            sum += matrix[i][j] = dist(Generator::rand_gen);
                                                                        }
@@ -182,19 +230,21 @@ struct Generator
     /*
      * Create a test (matrix, answer vector, right part vector) for the third task and writes to given directory with given k prefix
      * Note, that as we have zero-numeration we have to use changed formula: (i + j - 1) -> ((i + 1) + (j + 1) - 1) = (i + j + 1)
-     * TODO: apply width, so it generate diagonal or lane matrixes
      */
     static void create_profile_gilbert_test(const std::string& dir, const std::size_t& dim, const std::size_t& width = UINT_MAX)
     {
         create_test(dir, std::to_string(dim), 
-                    std::move(generate_test_profile_matrix(dim, [](std::vector<std::vector<double>>& matrix)
+                    std::move(generate_test_profile_matrix(dim, [width](std::vector<std::vector<double>>& matrix)
                                                            {
                                                                const std::size_t dim = matrix.size();
                                                                for (int i = 0; i < dim; i++)
                                                                {
                                                                    for (int j = 0; j < dim; j++)
                                                                    {
-                                                                       matrix[i][j] = 1. / (i + j + 1.);
+                                                                       if (std::abs(i - j) <= width)
+                                                                       {
+                                                                           matrix[i][j] = 1. / (i + j + 1.);
+                                                                       }
                                                                    }
                                                                }
                                                            })),
@@ -246,7 +296,8 @@ struct Generator
     }
 
     static inline std::mt19937 rand_gen{std::random_device{}()};
-    static constexpr double limit{ 100. };
+    static constexpr double limit{ 1000. };
+
 private:
     template <class T>
     static void read_vec(std::istream& is, std::vector<T>& vec)
@@ -264,6 +315,7 @@ private:
     template <class T>
     static void print_vec(std::ostream& os, const std::vector<T>& vec)
     {
+        os << std::fixed << std::setprecision(20);
         for (const T& elem : vec)
         {
             os << elem << '\t';
@@ -274,7 +326,7 @@ private:
      * Generate a quad matrix with the given filling rule
      */
     template <class Rule>
-    static ProfileMatrix generate_test_quad_matrix(const std::size_t& dim, Rule rule = Rule())
+    static QuadMatrix generate_test_quad_matrix(const std::size_t& dim, Rule rule = Rule())
     {
         std::vector<std::vector<double>> m(dim, std::vector<double>(dim, 0.));
         rule(m);

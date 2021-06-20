@@ -1,6 +1,7 @@
 #include "QuadMatrix.h"
 
 #include <cassert>
+#include <iomanip>
 
 QuadMatrix::QuadMatrix(std::vector<value_vec> other_matrix)
     : matrix(std::move(other_matrix))
@@ -31,6 +32,7 @@ void QuadMatrix::set(id_t row, id_t col, value_t val) /*override*/
 
 std::ostream& operator<<(std::ostream& os, const QuadMatrix& qm)
 {
+    os << std::setprecision(20);
     int size = qm.matrix.size();
     for (int i = 0; i < size; i++)
     {

@@ -25,7 +25,7 @@ ProfileMatrix::ProfileMatrix(const Matrix & matrix)
         id_t pos = 0;
         for (; pos < i && matrix.get(i, pos) == 0; pos++);
         prof[i + 1] = prof[i] + i - pos;
-        for (int j = pos; j < i; j++)
+        for (id_t j = pos; j < i; j++)
         {
             a_low.push_back(matrix.get(i, j));
             a_up.push_back(matrix.get(j, i));
@@ -127,7 +127,7 @@ void print_vector(std::ostream& os, const std::vector<T> & vec)
 }
 std::ostream& operator<<(std::ostream& os, const ProfileMatrix& pm)
 {
-    os << std::setprecision(10);
+    os << std::setprecision(20);
     print_vector(os, pm.diag);
     os << '\n';
     print_vector(os, pm.a_low);
