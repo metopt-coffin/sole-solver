@@ -2,10 +2,64 @@
 #include "LUMatrixViews.h"
 #include "ProfileMatrix.h"
 
+#include <algorithm>
 #include <cmath>
 #include <numeric>
 
-/*static*/ auto Solver::solve_gauss(Matrix&& a, std::vector<value_t>&& b) -> Result
+// vector operation helpers
+namespace
+{
+    using value_t = Solver::value_t;
+    using value_vec = std::vector<value_t>;
+
+    /*
+     * Subtraction of two vectors
+     */
+    value_vec v_sub(const value_vec& left, const value_vec& right)
+    {
+        value_vec res(left.size());
+        std::transform(left.begin(), left.end(), right.begin(), res.begin(), std::minus<>{});
+        return res;
+    }
+
+    /*
+     * Sum of two vectors
+     */
+    value_vec v_sum(const value_vec& left, const value_vec& right)
+    {
+        value_vec res(left.size());
+        std::transform(left.begin(), left.end(), right.begin(), res.begin(), std::plus<>{});
+        return res;
+    }
+
+    /*
+     * Scalar or dot product of two vectors
+     */
+    value_t sc_product(const value_vec& left, const value_vec& right)
+    {
+        return std::inner_product(left.begin(), left.end(), right.begin(), 0.);
+    }
+
+    /*
+     * Product of scalar and vector
+     */
+    value_vec sc_mult(const value_vec& vec, value_t v)
+    {
+        value_vec res = vec;
+        std::for_each(res.begin(), res.end(), [v](value_t& value) { value *= v; });
+        return res;
+    }
+
+    /*
+     * Euclidean norm
+     */
+    value_t norma(const value_vec& vec)
+    {
+        return std::sqrt(sc_product(vec, vec));
+    }
+} // anonymous namespace
+
+/*static*/ auto Solver::solve_gauss(Matrix&& a, value_vec&& b) -> Result
 {
     id_t actions_cnt = 0;                                           // counter for mult and div operations
     /*
@@ -42,8 +96,8 @@
                 pivot_row = j;
             }
         }
-        if (std::abs(pivot) < 1e-20)                                // if pivot element is zero, exit. Hope that 10^-20 is enough for epsilon.
-        { return { b, Result::FAILED }; }                           //    (just a thought: probably, should add epsilon to the function's signature?)
+        //if (std::abs(pivot) < 1e-20)                                // if pivot element is zero, exit. Hope that 10^-20 is enough for epsilon.
+        //{ return { b, Result::FAILED }; }                           //    (just a thought: probably, should add epsilon to the function's signature?)
 
         std::swap(permutations[i], permutations[pivot_row]);        // "swap" rows in virtual matrix
         i_row = permutations[i];                                    // get physical index of current row (after swap)
@@ -91,7 +145,7 @@
     /*
      * Write down the result vector in correct order
      */
-    std::vector<value_t> answer(b.size());
+    value_vec answer(b.size());
     for (int i = 0; i < b.size(); i++)
     {
         answer[i] = b[permutations[i]];
@@ -99,7 +153,7 @@
     return { answer, actions_cnt };
 }
 
-/*static*/ auto Solver::solve_lu(Matrix && a, std::vector<value_t> && b) -> Result
+/*static*/ auto Solver::solve_lu(Matrix && a, value_vec&& b) -> Result
 {
     bool untrusted_flag = false;                                    // flag for division by near-epsilon number
     id_t actions_cnt = 0;                                           // counter for mult and div operations
@@ -112,17 +166,6 @@
     ProfileMatrix pm = ProfileMatrix::lu_decompose(std::move(a));
     LMatrixView l(pm);
     UMatrixView u(pm);
-
-    std::cout << "LU-decomposed:\n";                                // TODO: remove it or write a func for it
-    for (int i = 0; i < pm.row_cnt(); i++)
-    {
-        for (int j = 0; j < pm.col_cnt(); j++)
-        {
-            std::cout << ((i <= j) ? u.get(i, j) : l.get(i, j)) << ' ';
-        }
-        std::cout << std::endl;
-    }
-    std::cout << std::endl;
 
     /*
      * L is a lower triangular matrix.
@@ -157,4 +200,29 @@
     }
 
     return { b, actions_cnt };
+}
+
+/*static*/ auto Solver::solve_cgm(Matrix&& A, value_vec&& b, const double eps)->Result
+{
+    const int ITER_MAX = 5000;
+
+    id_t actions_cnt = 1;
+    value_vec x(b.size(), 0.);                                      // Choose the initial approximation
+    value_vec r = b;                                                // r_0 = f - Ax_0, but x_0 = 0
+    value_vec z = r;                                                // z_0 = r_0
+
+    for (; actions_cnt < ITER_MAX; actions_cnt++)
+    {
+        double alpha = sc_product(r, r) / sc_product(A * z, z);     // Count coefficient alpha_k
+        x = v_sum(x, sc_mult(z, alpha));                            // x_k = x_(k-1) + alpha_k * z_(k-1)
+        value_vec new_r = v_sub(r, sc_mult(A * z, alpha));          // r_k = r_(k-1) - alpha_k * A * z_(k - 1)
+        if (norma(new_r) / norma(b) <= eps)                         // if relational discrepancy is small, exit
+        { break; }
+
+        double beta = sc_product(new_r, new_r) / sc_product(r, r);  // Count coefficient beta_k
+        z = v_sum(new_r, sc_mult(z, beta));                         // z_k = r_k + beta_k * z_(k-1)
+        r = new_r;
+    }
+
+    return { x, actions_cnt };
 }

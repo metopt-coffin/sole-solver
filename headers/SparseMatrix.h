@@ -4,6 +4,9 @@
 
 #include "Matrix.h"
 
+/*
+ * Class, representing two-dimensional matrix contained in the sparsed row-column format
+ */
 class SparseMatrix : public Matrix
 {
     using value_vec = std::vector<value_t>;
@@ -49,6 +52,9 @@ public:
 
     id_t row_cnt() const override { return diag.size(); }
     id_t col_cnt() const override { return diag.size(); }
+    id_t elem_cnt() const override { return a_low.size() * 2 + diag.size(); }
+
+    virtual value_vec operator* (const value_vec& vec) const override;
 
     friend std::ostream& operator<<(std::ostream& os, const SparseMatrix& pm);
 private:

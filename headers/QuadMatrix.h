@@ -40,6 +40,7 @@ public:
 
     id_t row_cnt() const override { return matrix.size(); }
     id_t col_cnt() const override { return matrix.size(); }
+    id_t elem_cnt() const override { return row_cnt() * col_cnt(); }
 
     const std::vector<value_vec> & get_matrix() const;
 

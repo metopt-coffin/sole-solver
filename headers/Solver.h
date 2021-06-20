@@ -30,5 +30,9 @@ public:
      * Solve a system of linear equations using Gauss with pivot element choice
      */
     static Result solve_gauss(Matrix && a, std::vector<value_t> && b);
+    /*
+     * Solve a system of linear equations using the conjugate gradient method
+     */
+    static Result solve_cgm(Matrix&& a, std::vector<value_t>&& b, const double eps);
 
 };

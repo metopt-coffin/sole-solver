@@ -3,6 +3,7 @@
 #include "Matrix.h"
 #include <stdexcept>
 
+// View classes for LU-decomposition
 namespace detail {
 
 struct MatrixView : public Matrix
@@ -15,6 +16,7 @@ struct MatrixView : public Matrix
 
     id_t row_cnt() const override { return matrix.col_cnt(); }
     id_t col_cnt() const override { return matrix.row_cnt(); }
+    id_t elem_cnt() const override { return matrix.elem_cnt(); }
 
 protected:
     const Matrix & matrix;

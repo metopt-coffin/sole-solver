@@ -12,6 +12,7 @@
 
 #include "ProfileMatrix.h"
 #include "QuadMatrix.h"
+#include "SparseMatrix.h"
 namespace fs = std::filesystem;
 /*
  * Struct, that has only static methods-generators
@@ -251,6 +252,73 @@ struct Generator
                     std::move(generate_vector(dim)));
     }
 
+    /*-------------------------------------SPARSE-MATRIX-----------------------------------------*/
+
+    /*
+     * Generates sparse matrix dim x dim with diagonal prevalence
+     */
+    static SparseMatrix generate_sparse_cond_test(const std::size_t& dim)
+    {
+        std::vector<double> diag(dim, 0.);
+        std::vector<double> low, up;
+        std::vector<std::size_t> i_prof(dim + 1), j_prof;
+        i_prof[0] = i_prof[1] = 1;
+        
+        std::uniform_int_distribution<int> elem_dist(-4, -1);
+        for (int i = 2; i < i_prof.size(); i++)
+        {
+                std::size_t row = i - 1;
+                std::size_t col = rand_gen() % row;
+                i_prof[i] = i_prof[i - 1] + 1;
+                j_prof.push_back(col);
+                double low_value = elem_dist(rand_gen);
+                double up_value = elem_dist(rand_gen);
+                low.push_back(low_value);
+                diag[row] -= low_value;
+                up.push_back(up_value);
+                diag[col] -= up_value;
+        }
+        diag[0]++;
+        return SparseMatrix(std::move(diag), 
+                            std::move(low), 
+                            std::move(up), 
+                            std::move(j_prof), 
+                            std::move(i_prof));
+    }
+
+    /*
+     * Creates a sparse matrix with diagonal prevalence test and writes it down to dir.
+     */
+    static void create_sparse_test(const std::string& dir, const std::size_t& dim)
+    {
+        create_test(dir, std::to_string(dim), 
+                    std::move(generate_sparse_cond_test(dim)), 
+                    std::move(generate_vector(dim)));
+    }
+
+    /*
+     * Reads sparse matrix from a file
+     */
+    static SparseMatrix read_sparse_matrix(const std::string& dir, const std::string& filename)
+    {
+        fs::path p = ".";
+        p /= dir;
+        std::ifstream is(p / filename);
+
+        std::vector<double> diag;
+        std::vector<double> low;
+        std::vector<double> up;
+        std::vector<std::size_t> i_prof;
+        std::vector<std::size_t> j_prof;
+        read_vec(is, diag);
+        read_vec(is, low);
+        read_vec(is, up);
+        read_vec(is, j_prof);
+        read_vec(is, i_prof);
+
+        return SparseMatrix(std::move(diag), std::move(low), std::move(up), std::move(j_prof), std::move(i_prof));
+    }
+
     /*-----------------------------------MISCELLANEOUS-----------------------------------*/
 
     /*
@@ -296,7 +364,7 @@ struct Generator
     }
 
     static inline std::mt19937 rand_gen{std::random_device{}()};
-    static constexpr double limit{ 1000. };
+    static constexpr double limit{ 10. };
 
 private:
     template <class T>

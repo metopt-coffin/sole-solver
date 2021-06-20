@@ -117,14 +117,18 @@ auto ProfileMatrix::get_ptr(id_t row, id_t col) -> value_t*
     return const_cast<value_t*>(const_cast<const ProfileMatrix*>(this)->get_ptr(row, col));
 }
 
-template<class T>
-void print_vector(std::ostream& os, const std::vector<T> & vec)
+namespace
 {
-    for (std::size_t i = 0; i < vec.size(); i++)
+    template<class T>
+    void print_vector(std::ostream& os, const std::vector<T>& vec)
     {
-        os << vec[i] << '\t';
+        for (std::size_t i = 0; i < vec.size(); i++)
+        {
+            os << vec[i] << '\t';
+        }
     }
-}
+} // anonymous namespace
+
 std::ostream& operator<<(std::ostream& os, const ProfileMatrix& pm)
 {
     os << std::setprecision(20);

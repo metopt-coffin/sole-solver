@@ -1,8 +1,9 @@
 ﻿#include <algorithm>
-#include <iostream>
-#include <iomanip>
 #include <cmath>
 #include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <numeric>
 #include <random>
 #include <vector>
 
@@ -10,6 +11,7 @@
 #include "LUMatrixViews.h"
 #include "Matrix.h"
 #include "ProfileMatrix.h"
+#include "SparseMatrix.h"
 #include "QuadMatrix.h"
 #include "Utils.h"
 
@@ -56,17 +58,33 @@ template <class T>
 Solver::Result solve_sole(T&& a, std::vector<double>&& b)
 {
     print_sole_volfram(a, b);
-    T a_copy = std::move(a);
-    std::vector<double> b_copy = b;
+    return Solver::solve_gauss(std::move(a), std::move(b));
+}
 
-    std::cout << "\nLU result:\n\n";
-    auto res = Solver::solve_lu(T(a_copy), std::move(b_copy));
+template <class T>
+Solver::Result generate_and_solve_sole(T && a)
+{
+    std::mt19937 rand(std::random_device{}());
+    std::uniform_real_distribution<double> dist(-10., 10.);
+
+    std::vector<double> b(a.col_cnt());
+    std::generate(b.begin(), b.end(), [&] { return dist(rand); });
+    print_sole_volfram(a, b);
+    return solve_sole(std::move(a), std::move(b));
+}
+
+int main()
+{
+    std::cout << std::setprecision(10);
+    QuadMatrix qm = Generator::generate_quad_matrix(5);
+    auto res = generate_and_solve_sole(std::move(qm));
     if (res.actions == Solver::Result::FAILED)
     {
-        std::cout << "Method failed" << std::endl;
+        std::cout << "Method failed: division on zero element spotted" << std::endl;
     }
     else
     {
+        std::cout << "Answer is: \n";
         for (double el : res.answer)
         {
             std::cout << el << " ";
@@ -77,85 +95,10 @@ Solver::Result solve_sole(T&& a, std::vector<double>&& b)
             std::cout << "Results cannot be trusted";
         }
         else
-        { 
+        {
             std::cout << "Actions: " << res.actions;
         }
         std::cout << std::endl;
     }
-    return res;
-
-   /* std::cout << "\nChoice result:\n";
-    res = GaussSolver::solve(std::move(a_copy), std::move(b));
-    for (double el : res.answer)
-    {
-        std::cout << el << " ";
-    }
-    std::cout << std::endl;
-    std::cout << "Actions: " << res.actions;
-    std::cout << '\n';*/
-}
-
-template <class T>
-void generate_and_solve_sole(T && a)
-{
-    std::mt19937 rand(std::random_device{}());
-    std::uniform_real_distribution<double> dist(-100., 100.);
-
-    std::vector<double> b(a.col_cnt());
-    std::generate(b.begin(), b.end(), [&] { return dist(rand); });
-    solve_sole(std::move(a), std::move(b));
-}
-
-int main()
-{
-    std::cout << std::setprecision(10);
-    std::cout << "Work in progress ฅ^•ﻌ•^ฅ" << std::endl;
-    const int SZ = 10;
-    const std::string dir1 = "quad_cond_test";
-    for (int k = 0; k < 10; k++)
-    {
-        const std::string pref = std::to_string(k);
-        Generator::create_profile_cond_test(dir1, k, SZ);
-        ProfileMatrix qm = Generator::read_profile_matrix(dir1, pref + "_matrix.txt");
-        std::vector<double> answer = Generator::read_vector(dir1, pref + "_answer.txt");
-        std::vector<double> right = Generator::read_vector(dir1, pref + "_right.txt");
-        print_matrix(qm);
-        std::cout << std::endl;
-        auto res = solve_sole(std::move(qm), std::move(right));
-        
-        Generator::print_vector(dir1, pref + "_result.txt", res.answer);
-
-        std::cout << std::endl;
-        std::cout << "Ideal answer:\n";
-        for (const auto& elem : answer)
-        {
-            std::cout << elem << ' ';
-        }
-        std::cout << std::endl;
-        std::cout << std::endl;
-    }
-    //const std::string dir2 = "quad_gilbert_test";
-    //for (int sz = 10; sz <= 100; sz += 10)
-    //{
-    //    const std::string pref = std::to_string(sz);
-    //    Generator::create_profile_gilbert_test(dir2, sz);
-    //    ProfileMatrix qm = Generator::read_profile_matrix(dir2, pref + "_matrix.txt");
-    //    std::vector<double> answer = Generator::read_vector(dir2, pref + "_answer.txt");
-    //    std::vector<double> right = Generator::read_vector(dir2, pref + "_right.txt");
-    //    print_matrix(qm);
-    //    std::cout << std::endl;
-    //    auto res = solve_sole(std::move(qm), std::move(right));
-
-    //    Generator::print_vector(dir2, pref + "_result.txt", res.answer);
-
-    //    std::cout << std::endl;
-    //    std::cout << "Ideal answer:\n";
-    //    for (const auto& elem : answer)
-    //    {
-    //        std::cout << elem << ' ';
-    //    }
-    //    std::cout << std::endl;
-    //    std::cout << std::endl;
-    //}
     return 0;
 }

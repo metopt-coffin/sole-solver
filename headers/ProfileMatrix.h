@@ -54,6 +54,7 @@ public:
 
     id_t row_cnt() const override { return diag.size(); }
     id_t col_cnt() const override { return diag.size(); }
+    id_t elem_cnt() const override { return a_low.size() * 2 + diag.size(); }
 
     friend std::ostream& operator<<(std::ostream& os, const ProfileMatrix& pm);
 private:

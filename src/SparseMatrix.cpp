@@ -94,14 +94,38 @@ auto SparseMatrix::get_ptr(id_t row, id_t col) -> value_t*
     return const_cast<value_t*>(const_cast<const SparseMatrix*>(this)->get_ptr(row, col));
 }
 
-template<class T>
-void print_vector(std::ostream& os, const std::vector<T>& vec)
+auto SparseMatrix::operator* (const value_vec& vec) const /*override*/ -> value_vec
 {
-    for (std::size_t i = 0; i < vec.size(); i++)
+    const id_t dim = col_cnt();
+    assert(dim == vec.size() && "Dimension mismatch in SparseMatrix * vector");
+    value_vec answer(dim, 0);
+    for (id_t row = 0; row < dim; row++)
     {
-        os << vec[i] << '\t';
+        answer[row] += diag[row] * vec[row];
+        id_t prof_val = i_prof[row + 1] - i_prof[row];
+        id_t start_pos = i_prof[row] - 1;
+        for (id_t i = start_pos; i < start_pos + prof_val; i++)
+        {
+            id_t col = j_prof[i];
+            answer[row] += a_low[i] * vec[col];
+            answer[col] += a_up[i] * vec[row];
+        }
     }
+    return answer;
 }
+
+namespace
+{
+    template<class T>
+    void print_vector(std::ostream& os, const std::vector<T>& vec)
+    {
+        for (std::size_t i = 0; i < vec.size(); i++)
+        {
+            os << vec[i] << '\t';
+        }
+    }
+} // anonymous namespace
+
 std::ostream& operator<<(std::ostream& os, const SparseMatrix& sm)
 {
     os << std::setprecision(20);
