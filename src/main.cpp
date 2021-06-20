@@ -1,4 +1,4 @@
-﻿#include <algorithm>
+#include <algorithm>
 #include <cmath>
 #include <fstream>
 #include <iomanip>
